@@ -27,11 +27,18 @@ interface Playlist {
   songs: Song[];
 }
 
+type QueueSource = "home" | "playlist";
+
 interface MusicContextType {
-  /* player */
   currentSong: Song | null;
   isPlaying: boolean;
-  playSong: (song: Song, queue?: Song[]) => Promise<void>;
+
+  playSong: (
+    song: Song,
+    source?: QueueSource,
+    playlistId?: string
+  ) => Promise<void>;
+
   playNext: () => void;
   playPrevious: () => void;
   togglePlayPause: () => void;
@@ -41,19 +48,16 @@ interface MusicContextType {
   currentTime: number;
   duration: number;
 
-  /* data */
   allSongs: Song[];
   likedSongs: Song[];
   playlists: Playlist[];
 
-  /* playlist ops */
-  openAddToPlaylistModal: (song?: Song | null, playlistId?: string | null) => void;
+  openAddToPlaylistModal: (song?: Song | null) => void;
   addToPlaylist: (playlistId: string, songs: Song[]) => void;
   removeFromPlaylist: (playlistId: string, songId: string) => void;
   deletePlaylist: (playlistId: string) => void;
   createNewPlaylist: () => void;
 
-  /* modal state */
   showPlaylistModal: boolean;
   setShowPlaylistModal: (v: boolean) => void;
   selectedPlaylistId: string | null;
@@ -63,7 +67,6 @@ interface MusicContextType {
   newPlaylistName: string;
   setNewPlaylistName: (v: string) => void;
 
-  /* misc */
   handleLike: (song: Song) => void;
   fallbackImage: string;
 }
@@ -85,6 +88,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const [isPlaying, setIsPlaying] = useState(false);
 
   const [queue, setQueue] = useState<Song[]>([]);
+  const [queueSource, setQueueSource] = useState<QueueSource>("home");
+  const [activePlaylistId, setActivePlaylistId] = useState<string | null>(null);
+
   const [likedSongs, setLikedSongs] = useState<Song[]>([]);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
 
@@ -93,7 +99,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const [duration, setDuration] = useState(0);
 
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
-  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(
+    null
+  );
   const [selectedSongs, setSelectedSongs] = useState<Song[]>([]);
   const [newPlaylistName, setNewPlaylistName] = useState("");
 
@@ -101,12 +109,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const loadSongs = async () => {
-      try {
-        const res = await axios.get<Song[]>(`${API}/api/songs`);
-        setAllSongs(res.data);
-      } catch (e) {
-        console.error("Failed to load songs", e);
-      }
+      const res = await axios.get<Song[]>(`${API}/api/songs`);
+      setAllSongs(res.data);
     };
     loadSongs();
   }, [API]);
@@ -117,37 +121,45 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const onPlay = () => setIsPlaying(true);
-    const onPause = () => setIsPlaying(false);
-    const onEnded = () => playNext();
-    const onTime = () => {
+    audio.onplay = () => setIsPlaying(true);
+    audio.onpause = () => setIsPlaying(false);
+    audio.onended = () => playNext();
+
+    audio.ontimeupdate = () => {
       setCurrentTime(audio.currentTime);
-      setProgress(audio.duration ? (audio.currentTime / audio.duration) * 100 : 0);
+      setProgress(
+        audio.duration ? (audio.currentTime / audio.duration) * 100 : 0
+      );
     };
-    const onLoaded = () => setDuration(audio.duration || 0);
 
-    audio.addEventListener("play", onPlay);
-    audio.addEventListener("pause", onPause);
-    audio.addEventListener("ended", onEnded);
-    audio.addEventListener("timeupdate", onTime);
-    audio.addEventListener("loadedmetadata", onLoaded);
-
-    return () => {
-      audio.removeEventListener("play", onPlay);
-      audio.removeEventListener("pause", onPause);
-      audio.removeEventListener("ended", onEnded);
-      audio.removeEventListener("timeupdate", onTime);
-      audio.removeEventListener("loadedmetadata", onLoaded);
+    audio.onloadedmetadata = () => {
+      setDuration(audio.duration || 0);
     };
   }, [queue, currentSong]);
 
-  /* ================= PLAYER ================= */
+  /* ================= CORE PLAYBACK ================= */
 
-  const playSong = async (song: Song, newQueue?: Song[]) => {
+  const playSong = async (
+    song: Song,
+    source: QueueSource = "home",
+    playlistId?: string
+  ) => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (newQueue) setQueue(newQueue);
+    /* 🔒 QUEUE DECISION — THIS IS THE FIX */
+    if (source === "playlist" && playlistId) {
+      const playlist = playlists.find((p) => p.id === playlistId);
+      if (playlist) {
+        setQueue(playlist.songs);
+        setQueueSource("playlist");
+        setActivePlaylistId(playlistId);
+      }
+    } else {
+      setQueue(allSongs);
+      setQueueSource("home");
+      setActivePlaylistId(null);
+    }
 
     if (currentSong?._id !== song._id) {
       audio.src = song.fileUrl;
@@ -160,14 +172,18 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   const playNext = () => {
     if (!currentSong || queue.length === 0) return;
-    const i = queue.findIndex((s) => s._id === currentSong._id);
-    if (i !== -1 && i < queue.length - 1) playSong(queue[i + 1]);
+    const index = queue.findIndex((s) => s._id === currentSong._id);
+    if (index !== -1 && index < queue.length - 1) {
+      playSong(queue[index + 1], queueSource, activePlaylistId ?? undefined);
+    }
   };
 
   const playPrevious = () => {
     if (!currentSong || queue.length === 0) return;
-    const i = queue.findIndex((s) => s._id === currentSong._id);
-    if (i > 0) playSong(queue[i - 1]);
+    const index = queue.findIndex((s) => s._id === currentSong._id);
+    if (index > 0) {
+      playSong(queue[index - 1], queueSource, activePlaylistId ?? undefined);
+    }
   };
 
   const togglePlayPause = () => {
@@ -184,16 +200,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   /* ================= PLAYLIST ================= */
 
-  const openAddToPlaylistModal = (
-  song?: Song | null,
-  playlistId?: string | null
-) => {
-  
-  setSelectedSongs(song ? [song] : []);
-  setSelectedPlaylistId(playlistId ?? null);
-  setShowPlaylistModal(true);
-};
-
+  const openAddToPlaylistModal = (song?: Song | null) => {
+    setSelectedSongs(song ? [song] : []);
+    setShowPlaylistModal(true);
+  };
 
   const toggleSongSelection = (song: Song) => {
     setSelectedSongs((p) =>
@@ -220,7 +230,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
               ...pl,
               songs: [
                 ...pl.songs,
-                ...songs.filter((s) => !pl.songs.some((x) => x._id === s._id)),
+                ...songs.filter(
+                  (s) => !pl.songs.some((x) => x._id === s._id)
+                ),
               ],
             }
           : pl
@@ -300,3 +312,334 @@ export const useMusic = () => {
   return ctx;
 };
 
+
+
+// "use client";
+
+// import {
+//   createContext,
+//   useContext,
+//   useEffect,
+//   useRef,
+//   useState,
+//   ReactNode,
+// } from "react";
+// import axios from "axios";
+
+// /* ================= TYPES ================= */
+
+// export interface Song {
+//   _id: string;
+//   title: string;
+//   artist: string;
+//   movie?: string;
+//   fileUrl: string;
+//   coverImage: string;
+// }
+
+// interface Playlist {
+//   id: string;
+//   name: string;
+//   songs: Song[];
+// }
+
+// type QueueSource = "home" | "playlist";
+
+// interface MusicContextType {
+//   /* player */
+//   currentSong: Song | null;
+//   isPlaying: boolean;
+//   playSong: (song: Song, queueSource?: QueueSource, playlistId?: string) => Promise<void>;
+//   playNext: () => void;
+//   playPrevious: () => void;
+//   togglePlayPause: () => void;
+//   handleSeek: (value: number) => void;
+
+//   progress: number;
+//   currentTime: number;
+//   duration: number;
+
+//   /* data */
+//   allSongs: Song[];
+//   likedSongs: Song[];
+//   playlists: Playlist[];
+
+//   /* playlist ops */
+//   openAddToPlaylistModal: (song?: Song | null, playlistId?: string | null) => void;
+//   addToPlaylist: (playlistId: string, songs: Song[]) => void;
+//   removeFromPlaylist: (playlistId: string, songId: string) => void;
+//   deletePlaylist: (playlistId: string) => void;
+//   createNewPlaylist: () => void;
+
+//   /* modal state */
+//   showPlaylistModal: boolean;
+//   setShowPlaylistModal: (v: boolean) => void;
+//   selectedPlaylistId: string | null;
+//   setSelectedPlaylistId: (v: string | null) => void;
+//   selectedSongs: Song[];
+//   toggleSongSelection: (song: Song) => void;
+//   newPlaylistName: string;
+//   setNewPlaylistName: (v: string) => void;
+
+//   /* misc */
+//   handleLike: (song: Song) => void;
+//   fallbackImage: string;
+// }
+
+// const MusicContext = createContext<MusicContextType | null>(null);
+
+// /* ================= PROVIDER ================= */
+
+// export function MusicProvider({ children }: { children: ReactNode }) {
+//   const audioRef = useRef<HTMLAudioElement | null>(
+//     typeof Audio !== "undefined" ? new Audio() : null
+//   );
+
+//   const API = process.env.NEXT_PUBLIC_API_URL!;
+//   const fallbackImage = "https://unsplash.it/300/300?random";
+
+//   const [allSongs, setAllSongs] = useState<Song[]>([]);
+//   const [currentSong, setCurrentSong] = useState<Song | null>(null);
+//   const [isPlaying, setIsPlaying] = useState(false);
+
+//   const [queue, setQueue] = useState<Song[]>([]);
+//   const [queueSource, setQueueSource] = useState<QueueSource>("home");
+//   const [activePlaylistId, setActivePlaylistId] = useState<string | null>(null);
+
+//   const [likedSongs, setLikedSongs] = useState<Song[]>([]);
+//   const [playlists, setPlaylists] = useState<Playlist[]>([]);
+
+//   const [progress, setProgress] = useState(0);
+//   const [currentTime, setCurrentTime] = useState(0);
+//   const [duration, setDuration] = useState(0);
+
+//   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
+//   const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(null);
+//   const [selectedSongs, setSelectedSongs] = useState<Song[]>([]);
+//   const [newPlaylistName, setNewPlaylistName] = useState("");
+
+//   /* ================= LOAD SONGS ================= */
+
+//   useEffect(() => {
+//     const loadSongs = async () => {
+//       try {
+//         const res = await axios.get<Song[]>(`${API}/api/songs`);
+//         setAllSongs(res.data);
+//       } catch (e) {
+//         console.error("Failed to load songs", e);
+//       }
+//     };
+//     loadSongs();
+//   }, [API]);
+
+//   /* ================= AUDIO EVENTS ================= */
+
+//   useEffect(() => {
+//     const audio = audioRef.current;
+//     if (!audio) return;
+
+//     const onPlay = () => setIsPlaying(true);
+//     const onPause = () => setIsPlaying(false);
+//     const onEnded = () => playNext();
+//     const onTime = () => {
+//       setCurrentTime(audio.currentTime);
+//       setProgress(
+//         audio.duration ? (audio.currentTime / audio.duration) * 100 : 0
+//       );
+//     };
+//     const onLoaded = () => setDuration(audio.duration || 0);
+
+//     audio.addEventListener("play", onPlay);
+//     audio.addEventListener("pause", onPause);
+//     audio.addEventListener("ended", onEnded);
+//     audio.addEventListener("timeupdate", onTime);
+//     audio.addEventListener("loadedmetadata", onLoaded);
+
+//     return () => {
+//       audio.removeEventListener("play", onPlay);
+//       audio.removeEventListener("pause", onPause);
+//       audio.removeEventListener("ended", onEnded);
+//       audio.removeEventListener("timeupdate", onTime);
+//       audio.removeEventListener("loadedmetadata", onLoaded);
+//     };
+//   }, [queue, currentSong]);
+
+//   /* ================= PLAYER CORE ================= */
+
+//   const playSong = async (
+//     song: Song,
+//     source: QueueSource = "home",
+//     playlistId?: string
+//   ) => {
+//     const audio = audioRef.current;
+//     if (!audio) return;
+
+//     if (source === "home") {
+//       setQueue(allSongs);
+//       setQueueSource("home");
+//       setActivePlaylistId(null);
+//     }
+
+//     if (source === "playlist" && playlistId) {
+//       const pl = playlists.find((p) => p.id === playlistId);
+//       if (pl) {
+//         setQueue(pl.songs);
+//         setQueueSource("playlist");
+//         setActivePlaylistId(playlistId);
+//       }
+//     }
+
+//     if (currentSong?._id !== song._id) {
+//       audio.src = song.fileUrl;
+//       setCurrentSong(song);
+//       await audio.play();
+//     } else {
+//       audio.play();
+//     }
+//   };
+
+//   const playNext = () => {
+//     if (!currentSong || queue.length === 0) return;
+//     const index = queue.findIndex((s) => s._id === currentSong._id);
+//     if (index !== -1 && index < queue.length - 1) {
+//       playSong(queue[index + 1], queueSource, activePlaylistId ?? undefined);
+//     }
+//   };
+
+//   const playPrevious = () => {
+//     if (!currentSong || queue.length === 0) return;
+//     const index = queue.findIndex((s) => s._id === currentSong._id);
+//     if (index > 0) {
+//       playSong(queue[index - 1], queueSource, activePlaylistId ?? undefined);
+//     }
+//   };
+
+//   const togglePlayPause = () => {
+//     const audio = audioRef.current;
+//     if (!audio) return;
+//     audio.paused ? audio.play() : audio.pause();
+//   };
+
+//   const handleSeek = (v: number) => {
+//     const audio = audioRef.current;
+//     if (!audio || !audio.duration) return;
+//     audio.currentTime = (v / 100) * audio.duration;
+//   };
+
+//   /* ================= PLAYLIST ================= */
+
+//   const openAddToPlaylistModal = (
+//     song?: Song | null,
+//     playlistId?: string | null
+//   ) => {
+//     setSelectedSongs(song ? [song] : []);
+//     setSelectedPlaylistId(playlistId ?? null);
+//     setShowPlaylistModal(true);
+//   };
+
+//   const toggleSongSelection = (song: Song) => {
+//     setSelectedSongs((p) =>
+//       p.some((s) => s._id === song._id)
+//         ? p.filter((s) => s._id !== song._id)
+//         : [...p, song]
+//     );
+//   };
+
+//   const createNewPlaylist = () => {
+//     if (!newPlaylistName.trim()) return;
+//     setPlaylists((p) => [
+//       ...p,
+//       { id: Date.now().toString(), name: newPlaylistName, songs: [] },
+//     ]);
+//     setNewPlaylistName("");
+//   };
+
+//   const addToPlaylist = (playlistId: string, songs: Song[]) => {
+//     setPlaylists((p) =>
+//       p.map((pl) =>
+//         pl.id === playlistId
+//           ? {
+//               ...pl,
+//               songs: [
+//                 ...pl.songs,
+//                 ...songs.filter(
+//                   (s) => !pl.songs.some((x) => x._id === s._id)
+//                 ),
+//               ],
+//             }
+//           : pl
+//       )
+//     );
+//     setShowPlaylistModal(false);
+//   };
+
+//   const removeFromPlaylist = (pid: string, sid: string) => {
+//     setPlaylists((p) =>
+//       p.map((pl) =>
+//         pl.id === pid
+//           ? { ...pl, songs: pl.songs.filter((s) => s._id !== sid) }
+//           : pl
+//       )
+//     );
+//   };
+
+//   const deletePlaylist = (pid: string) => {
+//     setPlaylists((p) => p.filter((pl) => pl.id !== pid));
+//   };
+
+//   const handleLike = (song: Song) => {
+//     setLikedSongs((p) =>
+//       p.some((s) => s._id === song._id)
+//         ? p.filter((s) => s._id !== song._id)
+//         : [...p, song]
+//     );
+//   };
+
+//   return (
+//     <MusicContext.Provider
+//       value={{
+//         currentSong,
+//         isPlaying,
+//         playSong,
+//         playNext,
+//         playPrevious,
+//         togglePlayPause,
+//         handleSeek,
+
+//         progress,
+//         currentTime,
+//         duration,
+
+//         allSongs,
+//         likedSongs,
+//         playlists,
+
+//         openAddToPlaylistModal,
+//         addToPlaylist,
+//         removeFromPlaylist,
+//         deletePlaylist,
+//         createNewPlaylist,
+
+//         showPlaylistModal,
+//         setShowPlaylistModal,
+//         selectedPlaylistId,
+//         setSelectedPlaylistId,
+//         selectedSongs,
+//         toggleSongSelection,
+//         newPlaylistName,
+//         setNewPlaylistName,
+
+//         handleLike,
+//         fallbackImage,
+//       }}
+//     >
+//       {children}
+//     </MusicContext.Provider>
+//   );
+// }
+
+// export const useMusic = () => {
+//   const ctx = useContext(MusicContext);
+//   if (!ctx) throw new Error("useMusic must be used within MusicProvider");
+//   return ctx;
+// };

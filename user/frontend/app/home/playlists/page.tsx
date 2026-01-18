@@ -121,7 +121,7 @@ export default function PlaylistsPage() {
                                  bg-zinc-800/60 px-3 py-2 rounded-lg"
                     >
                       <button
-                        onClick={() => playSong(song)}
+                        onClick={() => playSong(song, "playlist", playlist.id)}
                         className="truncate text-left flex-1 hover:text-green-400"
                       >
                         {song.title}

@@ -9,7 +9,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body suppressHydrationWarning>
+      <body
+        suppressHydrationWarning
+        className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black text-white antialiased"
+      >
         <MusicProvider>
           {children}
         </MusicProvider>
@@ -17,4 +20,3 @@ export default function RootLayout({
     </html>
   );
 }
-
