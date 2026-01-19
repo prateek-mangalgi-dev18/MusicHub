@@ -1,13 +1,16 @@
 const express = require("express");
 const app = express();
-const port = 1000;
+
+require("dotenv").config(); 
+
+const port = process.env.PORT || 1000;
 
 const { connectToMongoDB } = require("./config");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const axios = require("axios");
 
-// ✅ FIXED PATHS (IMPORTANT)
+// -------------------- ROUTES --------------------
 const songRoutes = require("../routes/songroutes");
 const userRoutes = require("../routes/user");
 
@@ -21,24 +24,40 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
+// ✅ ALLOWED ORIGINS
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://musichub-gjpr.onrender.com",
+];
+
 app.use(
   cors({
-    origin: "http://localhost:3000", // Next.js frontend
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true); 
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
-    // methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
+// ✅ HANDLE PREFLIGHT REQUESTS
+app.options("*", cors());
+
 // -------------------- API ROUTES --------------------
 app.use("/api/songs", songRoutes);
-app.use("/api/user", require("../routes/user"));
-
+app.use("/api/user", userRoutes);
 
 // -------------------- AUDIO PROXY --------------------
 app.get("/proxy/uploads/:filename", async (req, res) => {
   try {
     const response = await axios.get(
-      `http://localhost:1001/uploads/${req.params.filename}`,
+      `${process.env.AUDIO_SERVER || "http://localhost:1001"}/uploads/${req.params.filename}`,
       { responseType: "stream" }
     );
 
@@ -59,5 +78,3 @@ app.get("/proxy/uploads/:filename", async (req, res) => {
 app.listen(port, () =>
   console.log(`🚀 User backend running on http://localhost:${port}`)
 );
-
-

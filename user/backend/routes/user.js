@@ -6,9 +6,16 @@ const router = express.Router();
 
 /* ================= AUTH ================= */
 router.post("/signup", controller.handleUserSignup);
+
 router.post("/login", controller.handleUserLogin);
+
 router.post("/logout", (req, res) => {
-  res.clearCookie("token", { path: "/" });
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    path: "/",
+  });
   res.json({ success: true });
 });
 
@@ -18,7 +25,6 @@ router.post("/like/:songId", auth, controller.toggleLike);
 
 /* ================= PLAYLISTS ================= */
 router.get("/playlists", auth, controller.getPlaylists);
-
 router.post("/playlists", auth, controller.createPlaylist);
 
 router.get("/me", auth, (req, res) => {
@@ -27,7 +33,6 @@ router.get("/me", auth, (req, res) => {
     email: req.user.email,
   });
 });
-
 
 router.post(
   "/playlists/:playlistId/songs/:songId",
@@ -48,6 +53,3 @@ router.delete(
 );
 
 module.exports = router;
-
-
-
