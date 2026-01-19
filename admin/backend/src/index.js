@@ -10,7 +10,7 @@ const port = 1001;
 const { connectToMongoDB } = require('./config.js');
 
 // Connect to MongoDB
-connectToMongoDB('mongodb://localhost:27017/rr').then(() => {
+connectToMongoDB('process.env.MONGO_URI').then(() => {
     console.log('Connected to MongoDB');
 }).catch((err) => {
     console.log("MongoDB connection error", err);
