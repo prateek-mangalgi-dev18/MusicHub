@@ -17,7 +17,7 @@ export default function SignupPage() {
     setError("");
 
     try {
-      await axios.post("/signup", { name, email, password });
+      await axios.post("/api/user/signup", { name, email, password });
       router.push("/login");
     } catch (err: any) {
       setError(err.response?.data?.message || "Signup failed");

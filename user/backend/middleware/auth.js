@@ -1,19 +1,23 @@
-const { getUser } = require('../routes/auth');
+const { getUser } = require("../routes/auth");
 
-async function restrictToLoggedInUseOnly(req, res, next) {
+module.exports = function auth(req, res, next) {
+  try {
     const token = req.cookies.token;
 
-    if (!token) return res.redirect('/');
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
-    const user = await getUser(token);
-    
-    if (!user) return res.redirect('/');
-    req.user = user; 
-    console.log("pass")
+    const user = getUser(token);
+
+    if (!user || !user._id) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+
+    req.user = user; // ✅ THIS WAS MISSING
     next();
-}
-
-module.exports = {
-    restrictToLoggedInUseOnly,
+  } catch (err) {
+    console.error("Auth error:", err.message);
+    return res.status(401).json({ message: "Unauthorized" });
+  }
 };
-

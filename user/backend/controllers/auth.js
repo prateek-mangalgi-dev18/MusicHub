@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
 const generateToken = (user) => {
-    return jwt.sign({ id: user._id, role: user.role }, 'E-com', { expiresIn: '1h' });
+    return jwt.sign({ id: user._id, role: user.role }, 'E-com', { expiresIn: '7d' });
 };
 
 const handleUserSignup = async (req, res) => {
@@ -29,7 +29,13 @@ const handleUserLogin = async (req, res) => {
         }
 
         const token = generateToken(user);
-        res.cookie('token', token, { httpOnly: true });
+        // res.cookie('token', token, { httpOnly: true });
+        res.cookie("token", token, {
+        httpOnly: true,
+        sameSite: "none",
+        secure: false, // true in production (https)
+        });
+
         
         if (user.role === 'admin') {
             res.redirect('/admin/dashboard');

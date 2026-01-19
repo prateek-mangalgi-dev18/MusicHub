@@ -1,14 +1,26 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const userSchema = new mongoose.Schema({
+const playlistSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    songs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Music" }],
+  },
+  { _id: true }
+);
+
+const userSchema = new mongoose.Schema(
+  {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    likedSongs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Music' }],
-    playlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Music' }],
-});
 
-const User = mongoose.model('User', userSchema);
+    likedSongs: [{ type: mongoose.Schema.Types.ObjectId, ref: "Music" }],
 
-module.exports = User;
+    playlists: [playlistSchema], 
+  },
+  { timestamps: true }
+);
+
+module.exports = mongoose.model("User", userSchema);
+
 

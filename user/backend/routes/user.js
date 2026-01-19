@@ -1,30 +1,41 @@
-const express = require('express');
+const express = require("express");
+const auth = require("../middleware/auth");
+const controller = require("../controllers/user");
+
 const router = express.Router();
-const auth = require('../middleware/auth');
-const userController = require('../controllers/user');
+
+/* ================= AUTH ================= */
+router.post("/signup", controller.handleUserSignup);
+router.post("/login", controller.handleUserLogin);
+
+/* ================= LIKES ================= */
+router.get("/likes", auth, controller.getLikedSongs);
+router.post("/like/:songId", auth, controller.toggleLike);
+
+/* ================= PLAYLISTS ================= */
+router.get("/playlists", auth, controller.getPlaylists);
+
+router.post("/playlists", auth, controller.createPlaylist);
+
+router.post(
+  "/playlists/:playlistId/songs/:songId",
+  auth,
+  controller.addSongToPlaylist
+);
+
+router.delete(
+  "/playlists/:playlistId/songs/:songId",
+  auth,
+  controller.removeSongFromPlaylist
+);
+
+router.delete(
+  "/playlists/:playlistId",
+  auth,
+  controller.deletePlaylist
+);
+
+module.exports = router;
 
 
-router.get('/home', (req, res) => {
-    res.render('user/home', { user: req.user });
-});
-
-// Like a song
-router.post('/like/:songId', auth, userController.likeSong);
-
-// Add to playlist
-router.post('/playlist/:songId', auth, userController.addToPlaylist)
-  
-// Get liked songs
-router.get('/likes', auth, userController.getLikedSongs);
-
-// Get playlist
-router.get('/playlist', auth, userController.getPlaylist);
-
-// Unlike a song
-router.delete('/like/:songId', auth, userController.unlikeSong);
-
-// Remove song from playlist
-router.delete('/playlist/:songId', auth, userController.removeFromPlaylist);
-
-module.exports = {router};
 
