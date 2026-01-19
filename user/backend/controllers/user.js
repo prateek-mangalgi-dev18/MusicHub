@@ -51,28 +51,23 @@ exports.handleUserLogin = async (req, res) => {
   res.cookie("token", token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: false, // change to true in production
+    secure: false,
     path: "/",
   });
 
-  res.json({ success: true });
+  res.json({
+    success: true,
+    user: { _id: user._id, email: user.email },
+  });
 };
 
 /* ================= LIKES ================= */
 
 exports.toggleLike = async (req, res) => {
-  if (!req.user) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
   const user = await User.findById(req.user._id);
-  if (!user) {
-    return res.status(401).json({ message: "User not found" });
-  }
-
   const { songId } = req.params;
-  const index = user.likedSongs.indexOf(songId);
 
+  const index = user.likedSongs.indexOf(songId);
   if (index === -1) user.likedSongs.push(songId);
   else user.likedSongs.splice(index, 1);
 
@@ -81,10 +76,6 @@ exports.toggleLike = async (req, res) => {
 };
 
 exports.getLikedSongs = async (req, res) => {
-  if (!req.user) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
   const user = await User.findById(req.user._id).populate("likedSongs");
   res.json(user.likedSongs);
 };
@@ -92,26 +83,12 @@ exports.getLikedSongs = async (req, res) => {
 /* ================= PLAYLISTS ================= */
 
 exports.getPlaylists = async (req, res) => {
-  if (!req.user) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  const user = await User.findById(req.user._id).populate(
-    "playlists.songs"
-  );
+  const user = await User.findById(req.user._id).populate("playlists.songs");
   res.json(user.playlists);
 };
 
 exports.createPlaylist = async (req, res) => {
-  if (!req.user) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
   const { name } = req.body;
-  if (!name) {
-    return res.status(400).json({ message: "Name required" });
-  }
-
   const user = await User.findById(req.user._id);
 
   user.playlists.push({ name, songs: [] });
@@ -121,18 +98,10 @@ exports.createPlaylist = async (req, res) => {
 };
 
 exports.addSongToPlaylist = async (req, res) => {
-  if (!req.user) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
   const { playlistId, songId } = req.params;
   const user = await User.findById(req.user._id);
 
   const playlist = user.playlists.id(playlistId);
-  if (!playlist) {
-    return res.status(404).json({ message: "Playlist not found" });
-  }
-
   if (!playlist.songs.includes(songId)) {
     playlist.songs.push(songId);
     await user.save();
@@ -142,18 +111,10 @@ exports.addSongToPlaylist = async (req, res) => {
 };
 
 exports.removeSongFromPlaylist = async (req, res) => {
-  if (!req.user) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
   const { playlistId, songId } = req.params;
   const user = await User.findById(req.user._id);
 
   const playlist = user.playlists.id(playlistId);
-  if (!playlist) {
-    return res.status(404).json({ message: "Playlist not found" });
-  }
-
   playlist.songs = playlist.songs.filter(
     (id) => id.toString() !== songId
   );
@@ -163,10 +124,6 @@ exports.removeSongFromPlaylist = async (req, res) => {
 };
 
 exports.deletePlaylist = async (req, res) => {
-  if (!req.user) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
   const { playlistId } = req.params;
   const user = await User.findById(req.user._id);
 
@@ -177,5 +134,3 @@ exports.deletePlaylist = async (req, res) => {
   await user.save();
   res.json({ success: true });
 };
-
-

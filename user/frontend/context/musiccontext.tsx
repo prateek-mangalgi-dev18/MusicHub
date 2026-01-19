@@ -30,6 +30,11 @@ interface Playlist {
 type QueueSource = "home" | "playlist";
 
 interface MusicContextType {
+  /* status */
+  loadingUser: boolean;
+  userId: string | null;
+
+  /* player */
   currentSong: Song | null;
   isPlaying: boolean;
 
@@ -48,16 +53,12 @@ interface MusicContextType {
   currentTime: number;
   duration: number;
 
+  /* data */
   allSongs: Song[];
   likedSongs: Song[];
   playlists: Playlist[];
 
-  openAddToPlaylistModal: (song?: Song | null) => void;
-  addToPlaylist: (playlistId: string, songs: Song[]) => Promise<void>;
-  removeFromPlaylist: (playlistId: string, songId: string) => Promise<void>;
-  deletePlaylist: (playlistId: string) => Promise<void>;
-  createNewPlaylist: () => Promise<void>;
-
+  /* playlist UI */
   showPlaylistModal: boolean;
   setShowPlaylistModal: (v: boolean) => void;
   selectedPlaylistId: string | null;
@@ -67,7 +68,14 @@ interface MusicContextType {
   newPlaylistName: string;
   setNewPlaylistName: (v: string) => void;
 
+  /* actions */
+  openAddToPlaylistModal: (song?: Song | null) => void;
+  addToPlaylist: (playlistId: string, songs: Song[]) => Promise<void>;
+  removeFromPlaylist: (playlistId: string, songId: string) => Promise<void>;
+  deletePlaylist: (playlistId: string) => Promise<void>;
+  createNewPlaylist: () => Promise<void>;
   handleLike: (song: Song) => Promise<void>;
+
   fallbackImage: string;
 }
 
@@ -82,7 +90,13 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   const fallbackImage = "https://unsplash.it/300/300?random";
 
+  const [loadingUser, setLoadingUser] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+
   const [allSongs, setAllSongs] = useState<Song[]>([]);
+  const [likedSongs, setLikedSongs] = useState<Song[]>([]);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -90,71 +104,85 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const [queueSource, setQueueSource] = useState<QueueSource>("home");
   const [activePlaylistId, setActivePlaylistId] = useState<string | null>(null);
 
-  const [likedSongs, setLikedSongs] = useState<Song[]>([]);
-  const [playlists, setPlaylists] = useState<Playlist[]>([]);
-
   const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
 
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
-  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string | null>(
-    null
-  );
+  const [selectedPlaylistId, setSelectedPlaylistId] =
+    useState<string | null>(null);
   const [selectedSongs, setSelectedSongs] = useState<Song[]>([]);
   const [newPlaylistName, setNewPlaylistName] = useState("");
 
-  /* ================= RESET USER STATE ================= */
+  /* ================= RESET ================= */
 
-  const resetUserState = () => {
-    setLikedSongs([]);
-    setPlaylists([]);
+  const hardReset = () => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.src = "";
+    }
+
     setCurrentSong(null);
     setQueue([]);
+    setLikedSongs([]);
+    setPlaylists([]);
     setIsPlaying(false);
+    setSelectedSongs([]);
+    setSelectedPlaylistId(null);
   };
 
-  /* ================= INITIAL LOAD ================= */
+  /* ================= BOOTSTRAP ================= */
 
   useEffect(() => {
-    const bootstrap = async () => {
+    const init = async () => {
+      setLoadingUser(true);
+      hardReset();
+
       try {
-        const songsRes = await api.get<Song[]>("/api/songs");
-        setAllSongs(songsRes.data);
+        const me = await api.get("/api/user/me");
+        const uid = me.data._id;
+        setUserId(uid);
 
-        const likesRes = await api.get<Song[]>("/api/user/likes");
-        const playlistsRes = await api.get<any[]>("/api/user/playlists");
+        const [songs, likes, pls] = await Promise.all([
+          api.get<Song[]>("/api/songs"),
+          api.get<Song[]>("/api/user/likes"),
+          api.get<any[]>("/api/user/playlists"),
+        ]);
 
-        setLikedSongs(likesRes.data);
+        setAllSongs(songs.data);
+        setLikedSongs(likes.data);
         setPlaylists(
-          playlistsRes.data.map((p) => ({
+          pls.data.map((p) => ({
             id: p._id,
             name: p.name,
             songs: p.songs,
           }))
         );
 
-        // 🔁 Restore player state
-        const saved = localStorage.getItem("player_state");
+        const saved = localStorage.getItem(`player_state_${uid}`);
         if (saved) {
-          const { song, time, isPlaying } = JSON.parse(saved);
+          const { song, time, playing } = JSON.parse(saved);
           const audio = audioRef.current;
           if (audio) {
             audio.src = song.fileUrl;
             audio.currentTime = time;
             setCurrentSong(song);
-            if (isPlaying) audio.play();
+            if (playing) audio.play();
           }
         }
       } catch {
-        resetUserState();
+        setUserId(null);
+        hardReset();
+      } finally {
+        setLoadingUser(false);
       }
     };
 
-    bootstrap();
+    init();
   }, []);
 
-  /* ================= AUDIO EVENTS ================= */
+  /* ================= AUDIO ================= */
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -176,20 +204,20 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     };
   }, [queue, currentSong]);
 
-  /* ================= SAVE PLAYER STATE ================= */
+  /* ================= PERSIST PLAYER ================= */
 
   useEffect(() => {
-    if (!currentSong) return;
+    if (!userId || !currentSong) return;
 
     localStorage.setItem(
-      "player_state",
+      `player_state_${userId}`,
       JSON.stringify({
         song: currentSong,
         time: currentTime,
-        isPlaying,
+        playing: isPlaying,
       })
     );
-  }, [currentSong, currentTime, isPlaying]);
+  }, [currentSong, currentTime, isPlaying, userId]);
 
   /* ================= PLAYBACK ================= */
 
@@ -202,9 +230,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     if (!audio) return;
 
     if (source === "playlist" && playlistId) {
-      const playlist = playlists.find((p) => p.id === playlistId);
-      if (playlist) {
-        setQueue(playlist.songs);
+      const pl = playlists.find((p) => p.id === playlistId);
+      if (pl) {
+        setQueue(pl.songs);
         setQueueSource("playlist");
         setActivePlaylistId(playlistId);
       }
@@ -214,19 +242,15 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       setActivePlaylistId(null);
     }
 
-    if (currentSong?._id !== song._id) {
-      audio.src = song.fileUrl;
-      setCurrentSong(song);
-      await audio.play();
-    } else {
-      audio.play();
-    }
+    audio.src = song.fileUrl;
+    setCurrentSong(song);
+    await audio.play();
   };
 
   const playNext = () => {
     if (!currentSong || queue.length === 0) return;
     const i = queue.findIndex((s) => s._id === currentSong._id);
-    if (i !== -1 && i < queue.length - 1) {
+    if (i >= 0 && i < queue.length - 1) {
       playSong(queue[i + 1], queueSource, activePlaylistId ?? undefined);
     }
   };
@@ -251,7 +275,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     audio.currentTime = (v / 100) * audio.duration;
   };
 
-  /* ================= BACKEND SYNC ================= */
+  /* ================= ACTIONS ================= */
 
   const handleLike = async (song: Song) => {
     await api.post(`/api/user/like/${song._id}`);
@@ -274,14 +298,13 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setNewPlaylistName("");
   };
 
-  const addToPlaylist = async (playlistId: string, songs: Song[]) => {
+  const addToPlaylist = async (pid: string, songs: Song[]) => {
     for (const s of songs) {
-      await api.post(`/api/user/playlists/${playlistId}/songs/${s._id}`);
+      await api.post(`/api/user/playlists/${pid}/songs/${s._id}`);
     }
-
     setPlaylists((p) =>
       p.map((pl) =>
-        pl.id === playlistId
+        pl.id === pid
           ? {
               ...pl,
               songs: [
@@ -329,6 +352,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   return (
     <MusicContext.Provider
       value={{
+        loadingUser,
+        userId,
+
         currentSong,
         isPlaying,
         playSong,
@@ -345,12 +371,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         likedSongs,
         playlists,
 
-        openAddToPlaylistModal,
-        addToPlaylist,
-        removeFromPlaylist,
-        deletePlaylist,
-        createNewPlaylist,
-
         showPlaylistModal,
         setShowPlaylistModal,
         selectedPlaylistId,
@@ -359,6 +379,12 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         toggleSongSelection,
         newPlaylistName,
         setNewPlaylistName,
+
+        openAddToPlaylistModal,
+        addToPlaylist,
+        removeFromPlaylist,
+        deletePlaylist,
+        createNewPlaylist,
 
         handleLike,
         fallbackImage,
@@ -371,7 +397,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
 export const useMusic = () => {
   const ctx = useContext(MusicContext);
-  if (!ctx) throw new Error("useMusic must be used within MusicProvider");
+  if (!ctx) {
+    throw new Error("useMusic must be used within MusicProvider");
+  }
   return ctx;
 };
 
