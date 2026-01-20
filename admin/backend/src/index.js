@@ -24,6 +24,7 @@ app.set("view engine", "ejs");
 // -------------------- CORS --------------------
 const allowedOrigins = [
   "http://localhost:5174",
+  "http://localhost:5173",
   "https://musichub-admin-x6wd.onrender.com",
 ];
 
