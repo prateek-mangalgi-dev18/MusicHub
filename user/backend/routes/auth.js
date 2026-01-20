@@ -1,16 +1,28 @@
-const jwt = require("jsonwebtoken");
-const secret = "E-com";
+const express = require("express");
+const router = express.Router();
+const {
+  handleUserSignup,
+  handleUserLogin,
+} = require("../controllers/auth");
 
-function setUser(user) {
-  return jwt.sign(
-    { _id: user._id, email: user.email },
-    secret,
-    { expiresIn: "7d" }
-  );
-}
+router.post("/signup", handleUserSignup);
+router.post("/login", handleUserLogin);
 
-function getUser(token) {
-  return jwt.verify(token, secret);
-}
+module.exports = router;
 
-module.exports = { setUser, getUser };
+// const jwt = require("jsonwebtoken");
+// const secret = "E-com";
+
+// function setUser(user) {
+//   return jwt.sign(
+//     { _id: user._id, email: user.email },
+//     secret,
+//     { expiresIn: "7d" }
+//   );
+// }
+
+// function getUser(token) {
+//   return jwt.verify(token, secret);
+// }
+
+// module.exports = { setUser, getUser };

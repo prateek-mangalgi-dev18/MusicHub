@@ -1,6 +1,6 @@
 const User = require("../models/user");
-const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 const JWT_SECRET = "E-com"; // move to env later
 
@@ -47,14 +47,17 @@ const handleUserLogin = async (req, res) => {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(401).json({ message: "Invalid credentials" });
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
 
     const ok = await bcrypt.compare(password, user.password);
-    if (!ok) return res.status(401).json({ message: "Invalid credentials" });
+    if (!ok) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
 
     const token = generateToken(user);
 
-    // 🔥 SEND TOKEN (NO COOKIE)
     res.json({
       success: true,
       token,
@@ -73,6 +76,7 @@ module.exports = {
   handleUserSignup,
   handleUserLogin,
 };
+
 
 
 // const User = require('../models/user');

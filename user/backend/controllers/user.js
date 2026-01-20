@@ -4,68 +4,31 @@ const { setUser } = require("../routes/auth");
 
 /* ================= AUTH ================= */
 
-exports.handleUserSignup = async (req, res) => {
-  const { name, email, password } = req.body;
+// exports.handleUserSignup = async (req, res) => {
+//   const { name, email, password } = req.body;
 
-  if (!name || !email || !password) {
-    return res.json({ success: false, message: "All fields required" });
-  }
+//   if (!name || !email || !password) {
+//     return res.json({ success: false, message: "All fields required" });
+//   }
 
-  const exists = await User.findOne({ email });
-  if (exists) {
-    return res.json({ success: false, message: "User already exists" });
-  }
+//   const exists = await User.findOne({ email });
+//   if (exists) {
+//     return res.json({ success: false, message: "User already exists" });
+//   }
 
-  const hashed = await bcrypt.hash(password, 10);
+//   const hashed = await bcrypt.hash(password, 10);
 
-  await User.create({
-    name,
-    email,
-    password: hashed,
-    likedSongs: [],
-    playlists: [],
-  });
+//   await User.create({
+//     name,
+//     email,
+//     password: hashed,
+//     likedSongs: [],
+//     playlists: [],
+//   });
 
-  res.json({ success: true });
-};
+//   res.json({ success: true });
+// };
 
-const handleUserLogin = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password required" });
-    }
-
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-
-    // 🔥 GENERATE TOKEN
-    const token = generateToken(user);
-
-    // ✅ SEND TOKEN IN RESPONSE (THIS WAS MISSING)
-    res.status(200).json({
-      success: true,
-      token, 
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-      },
-    });
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ message: "Error logging in" });
-  }
-};
 
 
 // exports.handleUserLogin = async (req, res) => {
