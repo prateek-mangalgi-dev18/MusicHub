@@ -10,27 +10,46 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
+  e.preventDefault();
+  setError("");
 
-    try {
-      const res = await axios.post(
-        "/api/user/login",
-        { email, password },
-        { withCredentials: true } // 🔴 IMPORTANT
-      );
+  try {
+    const res = await axios.post("/api/user/login", {
+      email,
+      password,
+    });
 
-      if (res.data?.success) {
-        router.push("/home"); // ✅ LOGIN SUCCESS
-      } else {
-        setError(res.data?.message || "Invalid credentials");
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Login failed");
-    }
-  };
+    // 🔥 STORE TOKEN
+    localStorage.setItem("token", res.data.token);
+
+    // redirect
+    router.push("/home");
+  } catch (err: any) {
+    setError(err.response?.data?.message || "Login failed");
+  }
+};
+
+  // const handleLogin = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setError("");
+
+  //   try {
+  //     const res = await axios.post(
+  //       "/api/user/login",
+  //       { email, password },
+  //       { withCredentials: true } // 🔴 IMPORTANT
+  //     );
+
+  //     if (res.data?.success) {
+  //       router.push("/home"); // ✅ LOGIN SUCCESS
+  //     } else {
+  //       setError(res.data?.message || "Invalid credentials");
+  //     }
+  //   } catch (err: any) {
+  //     setError(err.response?.data?.message || "Login failed");
+  //   }
+  // };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-zinc-900 to-black">

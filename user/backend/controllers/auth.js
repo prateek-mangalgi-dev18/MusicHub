@@ -2,9 +2,7 @@ const User = require("../models/user");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
-/* ================= TOKEN ================= */
-
-const JWT_SECRET = "E-com"; // 🔴 In real production, move this to process.env.JWT_SECRET
+const JWT_SECRET = "E-com"; // move to env later
 
 const generateToken = (user) => {
   return jwt.sign(
@@ -15,85 +13,59 @@ const generateToken = (user) => {
 };
 
 /* ================= SIGNUP ================= */
-
 const handleUserSignup = async (req, res) => {
   try {
-    const { username, email, password, role } = req.body;
+    const { username, email, password } = req.body;
 
-    // basic validation
     if (!username || !email || !password) {
-      return res.status(400).json({ message: "Missing required fields" });
+      return res.status(400).json({ message: "Missing fields" });
     }
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    const exists = await User.findOne({ email });
+    if (exists) {
       return res.status(409).json({ message: "User already exists" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashed = await bcrypt.hash(password, 10);
 
-    const user = new User({
+    await User.create({
       username,
       email,
-      password: hashedPassword,
-      role: role || "user",
+      password: hashed,
+      role: "user",
     });
 
-    await user.save();
-
-    res.status(201).json({
-      success: true,
-      message: "User registered successfully",
-    });
-  } catch (error) {
-    console.error("Signup error:", error);
-    res.status(500).json({ message: "Error registering user" });
+    res.status(201).json({ success: true });
+  } catch (err) {
+    res.status(500).json({ message: "Signup failed" });
   }
 };
 
 /* ================= LOGIN ================= */
-
 const handleUserLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password required" });
-    }
-
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
+    if (!user) return res.status(401).json({ message: "Invalid credentials" });
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
+    const ok = await bcrypt.compare(password, user.password);
+    if (!ok) return res.status(401).json({ message: "Invalid credentials" });
 
     const token = generateToken(user);
 
-    // ✅ PRODUCTION-SAFE COOKIE
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,        // ✅ REQUIRED on HTTPS (Render)
-      sameSite: "none",    // ✅ REQUIRED for cross-origin
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
-
-    // ✅ DO NOT REDIRECT — SPA expects JSON
-    res.status(200).json({
+    // 🔥 SEND TOKEN (NO COOKIE)
+    res.json({
       success: true,
+      token,
       user: {
         id: user._id,
-        username: user.username,
         email: user.email,
         role: user.role,
       },
     });
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ message: "Error logging in" });
+  } catch (err) {
+    res.status(500).json({ message: "Login failed" });
   }
 };
 
@@ -101,6 +73,7 @@ module.exports = {
   handleUserSignup,
   handleUserLogin,
 };
+
 
 // const User = require('../models/user');
 // const jwt = require('jsonwebtoken');
