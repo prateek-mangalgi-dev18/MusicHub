@@ -27,7 +27,7 @@ const UploadMusic = () => {
     formData.append("movie", movie);
 
     try {
-      const res = await axios.post("/admin/upload", formData, {
+      const res = await axios.post("https://musichub-admin-x6wd.onrender.com/admin/upload", formData, {
         headers: {
           "Content-Type": "multipart/form-data"
         },
