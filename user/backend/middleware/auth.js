@@ -1,4 +1,6 @@
-const { getUser } = require("../routes/auth");
+const jwt = require("jsonwebtoken");
+
+const JWT_SECRET = "E-com";
 
 module.exports = function auth(req, res, next) {
   try {
@@ -8,16 +10,36 @@ module.exports = function auth(req, res, next) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const user = getUser(token);
+    const decoded = jwt.verify(token, JWT_SECRET);
 
-    if (!user || !user._id) {
-      return res.status(401).json({ message: "Invalid token" });
-    }
-
-    req.user = user; // ✅ THIS WAS MISSING
+    req.user = decoded; // { id, role }
     next();
   } catch (err) {
-    console.error("Auth error:", err.message);
-    return res.status(401).json({ message: "Unauthorized" });
+    return res.status(401).json({ message: "Invalid token" });
   }
 };
+
+
+// const { getUser } = require("../routes/auth");
+
+// module.exports = function auth(req, res, next) {
+//   try {
+//     const token = req.cookies.token;
+
+//     if (!token) {
+//       return res.status(401).json({ message: "Unauthorized" });
+//     }
+
+//     const user = getUser(token);
+
+//     if (!user || !user._id) {
+//       return res.status(401).json({ message: "Invalid token" });
+//     }
+
+//     req.user = user; // ✅ THIS WAS MISSING
+//     next();
+//   } catch (err) {
+//     console.error("Auth error:", err.message);
+//     return res.status(401).json({ message: "Unauthorized" });
+//   }
+// };
