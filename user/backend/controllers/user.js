@@ -29,37 +29,76 @@ exports.handleUserSignup = async (req, res) => {
   res.json({ success: true });
 };
 
-exports.handleUserLogin = async (req, res) => {
-  const { email, password } = req.body;
+const handleUserLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-  if (!email || !password) {
-    return res.json({ success: false, message: "All fields required" });
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    // 🔥 GENERATE TOKEN
+    const token = generateToken(user);
+
+    // ✅ SEND TOKEN IN RESPONSE (THIS WAS MISSING)
+    res.status(200).json({
+      success: true,
+      token, 
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ message: "Error logging in" });
   }
-
-  const user = await User.findOne({ email });
-  if (!user) {
-    return res.json({ success: false, message: "Invalid credentials" });
-  }
-
-  const ok = await bcrypt.compare(password, user.password);
-  if (!ok) {
-    return res.json({ success: false, message: "Invalid credentials" });
-  }
-
-  const token = setUser(user);
-
-  res.cookie("token", token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: false,
-    path: "/",
-  });
-
-  res.json({
-    success: true,
-    user: { _id: user._id, email: user.email },
-  });
 };
+
+
+// exports.handleUserLogin = async (req, res) => {
+//   const { email, password } = req.body;
+
+//   if (!email || !password) {
+//     return res.json({ success: false, message: "All fields required" });
+//   }
+
+//   const user = await User.findOne({ email });
+//   if (!user) {
+//     return res.json({ success: false, message: "Invalid credentials" });
+//   }
+
+//   const ok = await bcrypt.compare(password, user.password);
+//   if (!ok) {
+//     return res.json({ success: false, message: "Invalid credentials" });
+//   }
+
+//   const token = setUser(user);
+
+//   res.cookie("token", token, {
+//     httpOnly: true,
+//     sameSite: "",
+//     secure: false,
+//     path: "/",
+//   });
+
+//   res.json({
+//     success: true,
+//     user: { _id: user._id, email: user.email },
+//   });
+// };
 
 /* ================= LIKES ================= */
 
