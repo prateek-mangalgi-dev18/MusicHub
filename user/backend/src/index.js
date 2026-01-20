@@ -24,6 +24,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
+app.set("trust proxy", 1);
+
+
 // ✅ ALLOWED ORIGINS
 const allowedOrigins = [
   "http://localhost:3000",
