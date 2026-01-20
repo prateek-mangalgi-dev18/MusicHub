@@ -12,12 +12,19 @@ module.exports = function auth(req, res, next) {
 
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    req.user = decoded; // { id, role }
+    
+    req.user = {
+      _id: decoded.id,        
+      role: decoded.role,
+    };
+
     next();
   } catch (err) {
-    return res.status(401).json({ message: "Invalid token" });
+    console.error("Auth error:", err.message);
+    return res.status(401).json({ message: "Unauthorized" });
   }
 };
+
 
 
 // const { getUser } = require("../routes/auth");
