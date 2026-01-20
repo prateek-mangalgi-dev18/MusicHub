@@ -7,7 +7,7 @@ const ManageSongs = () => {
 
   const fetchSongs = async () => {
     try {
-      const res = await axios.get('http://localhost:1001/admin/songs', {
+      const res = await axios.get('/admin/songs', {
         withCredentials: true,
       });
       setSongs(res.data.songs || []);
@@ -18,7 +18,7 @@ const ManageSongs = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:1001/admin/songs/${id}`, {
+      await axios.delete(`/admin/songs/${id}`, {
         withCredentials: true,
       });
       setMessage('Song deleted successfully');

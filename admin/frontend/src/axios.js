@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const instance = axios.create({
-    baseURL: 'http://localhost:1001', // Backend URL
+    baseURL: 'https://musichub-admin-x6wd.onrender.com', // Backend URL
     withCredentials: true, // For handling cookies
 });
 

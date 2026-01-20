@@ -7,7 +7,7 @@ const ManageUsers = () => {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get('http://localhost:1001/admin/users', {
+      const res = await axios.get('https://musichub-admin-x6wd.onrender.com/admin/users', {
         withCredentials: true,
       });
       setUsers(res.data.users || []);
@@ -18,7 +18,7 @@ const ManageUsers = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:1001/admin/users/${id}`, {
+      await axios.delete(`https://musichub-admin-x6wd.onrender.com/admin/users/${id}`, {
         withCredentials: true,
       });
       setMessage('User deleted successfully');
