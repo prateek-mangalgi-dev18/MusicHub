@@ -66,10 +66,14 @@ export default function HomePage() {
   const isLiked = (id: string) =>
     likedSongs.some((s) => s._id === id);
 
-  const logout = async () => {
-    await api.post("/api/user/logout");
-    window.location.href = "/login";
-  };
+  // const logout = async () => {
+  //   await api.post("/api/user/logout");
+  //   window.location.href = "/login";
+  // };
+  const logout = () => {
+  localStorage.removeItem("token");
+  window.location.href = "/login";
+};
 
   /* ---------------- UI ---------------- */
 

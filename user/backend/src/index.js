@@ -13,6 +13,7 @@ const axios = require("axios");
 // -------------------- ROUTES --------------------
 const songRoutes = require("../routes/songroutes");
 const userRoutes = require("../routes/user");
+const authRoutes = require("../routes/auth");
 
 // -------------------- DB --------------------
 connectToMongoDB(process.env.MONGO_URI)
@@ -54,7 +55,10 @@ app.options("*", cors());
 
 // -------------------- API ROUTES --------------------
 app.use("/api/songs", songRoutes);
-app.use("/api/user", userRoutes);
+// app.use("/api/user", userRoutes);
+app.use("/api/user", authRoutes);   // login, signup
+app.use("/api/user", userRoutes);   // likes, playlists
+
 
 // -------------------- AUDIO PROXY --------------------
 app.get("/proxy/uploads/:filename", async (req, res) => {
