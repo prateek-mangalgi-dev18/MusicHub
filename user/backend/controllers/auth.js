@@ -33,6 +33,8 @@ const handleUserSignup = async (req, res) => {
       email,
       password: hashed,
       role: "user",
+      likedSongs: [],
+      playlists: [],
     });
 
     res.status(201).json({ success: true });
