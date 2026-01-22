@@ -71,6 +71,10 @@ interface MusicContextType {
   createNewPlaylist: () => Promise<void>;
   handleLike: (song: Song) => Promise<void>;
 
+  /* ✅ ADDED */
+  error: string | null;
+  setError: React.Dispatch<React.SetStateAction<string | null>>;
+
   fallbackImage: string;
 }
 
@@ -109,11 +113,15 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const [selectedSongs, setSelectedSongs] = useState<Song[]>([]);
   const [newPlaylistName, setNewPlaylistName] = useState("");
 
+  /* ✅ ADDED */
+  const [error, setError] = useState<string | null>(null);
+
   /* ================= BOOTSTRAP ================= */
 
   useEffect(() => {
     const init = async () => {
       setLoadingUser(true);
+      setError(null);
 
       try {
         const token = localStorage.getItem("token");
@@ -139,7 +147,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           }))
         );
 
-        /* 🔥 RESTORE LAST PLAYED SONG */
         const saved = localStorage.getItem(`player_state_${uid}`);
         if (saved) {
           const { song, time, playing } = JSON.parse(saved);
@@ -151,8 +158,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
             if (playing) audio.play();
           }
         }
-      } catch {
+      } catch (err: any) {
         setUserId(null);
+        setError("Failed to load music data");
       } finally {
         setLoadingUser(false);
       }
@@ -205,25 +213,29 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     source: QueueSource = "home",
     playlistId?: string
   ) => {
-    const audio = audioRef.current;
-    if (!audio) return;
+    try {
+      const audio = audioRef.current;
+      if (!audio) return;
 
-    if (source === "playlist" && playlistId) {
-      const pl = playlists.find((p) => p.id === playlistId);
-      if (pl) {
-        setQueue(pl.songs);
-        setQueueSource("playlist");
-        setActivePlaylistId(playlistId);
+      if (source === "playlist" && playlistId) {
+        const pl = playlists.find((p) => p.id === playlistId);
+        if (pl) {
+          setQueue(pl.songs);
+          setQueueSource("playlist");
+          setActivePlaylistId(playlistId);
+        }
+      } else {
+        setQueue(allSongs);
+        setQueueSource("home");
+        setActivePlaylistId(null);
       }
-    } else {
-      setQueue(allSongs);
-      setQueueSource("home");
-      setActivePlaylistId(null);
-    }
 
-    audio.src = song.fileUrl;
-    setCurrentSong(song);
-    await audio.play();
+      audio.src = song.fileUrl;
+      setCurrentSong(song);
+      await audio.play();
+    } catch {
+      setError("Unable to play song");
+    }
   };
 
   const playNext = () => {
@@ -360,6 +372,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         deletePlaylist,
         createNewPlaylist,
         handleLike,
+        error,
+        setError,
         fallbackImage,
       }}
     >
@@ -373,6 +387,7 @@ export const useMusic = () => {
   if (!ctx) throw new Error("useMusic must be used within MusicProvider");
   return ctx;
 };
+
 
 
 // "use client";
