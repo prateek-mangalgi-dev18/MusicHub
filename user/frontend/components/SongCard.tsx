@@ -2,15 +2,16 @@
 
 import { FaPlus, FaHeart } from "react-icons/fa";
 import { useMusic } from "@/context/musiccontext";
+import type { Song } from "@/types/song";
 
-interface Song {
-  _id: string;
-  title: string;
-  artist: string;
-  movie?: string;
-  fileUrl: string;
-  coverImage?: string;
-}
+// interface Song {
+//   _id: string;
+//   title: string;
+//   artist: string;
+//   movie?: string;
+//   fileUrl: string;
+//   coverImage?: string;
+// }
 
 export default function SongCard({ song }: { song: Song }) {
   const {
