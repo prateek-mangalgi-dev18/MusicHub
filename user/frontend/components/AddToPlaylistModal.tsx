@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { FaTimes, FaCheck } from "react-icons/fa";
-import { useMusic, Song } from "@/context/musiccontext";
+// import { useMusic, Song } from "@/context/musiccontext";
+import { useMusic } from "@/context/musiccontext";
+import type { Song } from "@/types/song";
+
 
 export default function AddToPlaylistModal() {
   const {
