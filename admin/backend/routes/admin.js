@@ -14,7 +14,7 @@ const {
 // Multer storage config
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/"); // Ensure this folder exists
+    cb(null, "uploads/"); 
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
@@ -34,22 +34,22 @@ const upload = multer({
   }
 });
 
-// Route: Upload song with image
+
 router.post("/upload", upload.fields([
-  { name: "file", maxCount: 1 },          // audio file
-  { name: "coverImage", maxCount: 1 }     // image file
+  { name: "file", maxCount: 1 },          
+  { name: "coverImage", maxCount: 1 }     
 ]), uploadSong);
 
-// Route: Get all songs
+
 router.get("/songs", getAllSongs);
 
-// Route: Delete song
+
 router.delete("/songs/:id", deleteSong);
 
-// Route: Get all users
+
 router.get("/users", getAllUsers);
 
-// Route: Delete user
+
 router.delete("/users/:id", deleteUser);
 
 module.exports = router;

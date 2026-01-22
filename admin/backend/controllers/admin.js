@@ -15,14 +15,14 @@ async function handleAdminSignup(req, res) {
             return res.json({ success: false, message: "Admin already exists." });
         }
 
-        // Generate salt and hash the password (10 is the salt rounds)
+
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
         await Admin.create({
             name,
             email,
-            password: hashedPassword,  // Save the hashed password
+            password: hashedPassword,  
         });
 
         return res.json({ success: true, message: "Signup successful!" });
@@ -47,17 +47,15 @@ async function handleAdminLogin(req, res) {
             return res.json({ success: false, message: "Invalid Admin name or password" });
         }
 
-        // Compare provided password with stored hashed password
         const isPasswordValid = await bcrypt.compare(password, admin.password);
 
         if (!isPasswordValid) {
             return res.json({ success: false, message: "Invalid Admin name or password" });
         }
 
-        // Generate JWT token for authenticated Admin
         const token = setAdmin(admin);
         
-        // Store the token in a cookie
+        
         res.cookie('token', token, { httpOnly: true });
 
         return res.json({ success: true, message: "Login successful!" });
