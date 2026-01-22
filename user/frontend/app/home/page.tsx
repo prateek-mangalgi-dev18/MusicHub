@@ -10,15 +10,18 @@ import {
   FaPause,
 } from "react-icons/fa";
 
+import type { Song } from "@/types/song";
+
+
 /* ---------------- TYPES ---------------- */
 
-interface Song {
-  _id: string;
-  title: string;
-  artist: string;
-  movie?: string;
-  coverImage?: string;
-}
+// interface Song {
+//   _id: string;
+//   title: string;
+//   artist: string;
+//   movie?: string;
+//   coverImage?: string;
+// }
 
 /* ---------------- PAGE ---------------- */
 

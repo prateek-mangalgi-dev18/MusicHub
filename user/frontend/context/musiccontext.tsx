@@ -9,17 +9,19 @@ import {
   ReactNode,
 } from "react";
 import api from "@/lib/axios";
+import type { Song } from "@/types/song";
+
 
 /* ================= TYPES ================= */
 
-export interface Song {
-  _id: string;
-  title: string;
-  artist: string;
-  movie?: string;
-  fileUrl: string;
-  coverImage: string;
-}
+// export interface Song {
+//   _id: string;
+//   title: string;
+//   artist: string;
+//   movie?: string;
+//   fileUrl: string;
+//   coverImage: string;
+// }
 
 interface Playlist {
   id: string;
