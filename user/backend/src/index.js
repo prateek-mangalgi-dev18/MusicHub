@@ -10,17 +10,17 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const axios = require("axios");
 
-// -------------------- ROUTES --------------------
+
 const songRoutes = require("../routes/songroutes");
 const userRoutes = require("../routes/user");
 const authRoutes = require("../routes/auth");
 
-// -------------------- DB --------------------
+
 connectToMongoDB(process.env.MONGO_URI)
   .then(() => console.log("✅ Connected to MongoDB"))
   .catch((err) => console.error("❌ MongoDB error", err));
 
-// -------------------- MIDDLEWARE --------------------
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
@@ -28,9 +28,8 @@ app.use(cookieParser());
 app.set("trust proxy", 1);
 
 
-// ✅ ALLOWED ORIGINS
 const allowedOrigins = [
-  "http://localhost:3000",
+  "https://musichub-live.vercel.app",
   "https://musichub-gjpr.onrender.com",
 ];
 
@@ -50,17 +49,16 @@ app.use(
   })
 );
 
-// ✅ HANDLE PREFLIGHT REQUESTS
+
 app.options("*", cors());
 
-// -------------------- API ROUTES --------------------
+
 app.use("/api/songs", songRoutes);
-// app.use("/api/user", userRoutes);
-app.use("/api/user", authRoutes);   // login, signup
-app.use("/api/user", userRoutes);   // likes, playlists
+app.use("/api/user", authRoutes);   
+app.use("/api/user", userRoutes);   
 
 
-// -------------------- AUDIO PROXY --------------------
+
 app.get("/proxy/uploads/:filename", async (req, res) => {
   try {
     const response = await axios.get(
@@ -81,7 +79,7 @@ app.get("/proxy/uploads/:filename", async (req, res) => {
   }
 });
 
-// -------------------- START --------------------
+
 app.listen(port, () =>
   console.log(`🚀 User backend running on http://localhost:${port}`)
 );

@@ -23,29 +23,3 @@ module.exports = function auth(req, res, next) {
   }
 };
 
-
-
-
-// const { getUser } = require("../routes/auth");
-
-// module.exports = function auth(req, res, next) {
-//   try {
-//     const token = req.cookies.token;
-
-//     if (!token) {
-//       return res.status(401).json({ message: "Unauthorized" });
-//     }
-
-//     const user = getUser(token);
-
-//     if (!user || !user._id) {
-//       return res.status(401).json({ message: "Invalid token" });
-//     }
-
-//     req.user = user; // ✅ THIS WAS MISSING
-//     next();
-//   } catch (err) {
-//     console.error("Auth error:", err.message);
-//     return res.status(401).json({ message: "Unauthorized" });
-//   }
-// };

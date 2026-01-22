@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Song = require('../models/music');
 
-// Get all songs
+
 router.get('/', async (req, res) => {
   try {
     const songs = await Song.find();
@@ -12,7 +12,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Get single song by ID
+
 router.get('/:id', async (req, res) => {
   try {
     const song = await Song.findById(req.params.id);
