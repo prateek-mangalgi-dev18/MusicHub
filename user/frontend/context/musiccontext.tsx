@@ -17,7 +17,7 @@ import type { Song } from "@/types/song";
 // export interface Song {
 //   _id: string;
 //   title: string;
-//   artist: string;
+//   artist: string;f
 //   movie?: string;
 //   fileUrl: string;
 //   coverImage: string;
@@ -66,7 +66,12 @@ interface MusicContextType {
   newPlaylistName: string;
   setNewPlaylistName: (v: string) => void;
 
-  openAddToPlaylistModal: (song?: Song | null) => void;
+  // openAddToPlaylistModal: (song?: Song | null) => void;
+  openAddToPlaylistModal: (
+  song?: Song | null,
+  playlistId?: string | null
+) => void;
+
   addToPlaylist: (playlistId: string, songs: Song[]) => Promise<void>;
   removeFromPlaylist: (playlistId: string, songId: string) => Promise<void>;
   deletePlaylist: (playlistId: string) => Promise<void>;
@@ -329,10 +334,19 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setPlaylists((p) => p.filter((pl) => pl.id !== pid));
   };
 
-  const openAddToPlaylistModal = (song?: Song | null) => {
-    setSelectedSongs(song ? [song] : []);
-    setShowPlaylistModal(true);
-  };
+  // const openAddToPlaylistModal = (song?: Song | null) => {
+  //   setSelectedSongs(song ? [song] : []);
+  //   setShowPlaylistModal(true);
+  // };
+  const openAddToPlaylistModal = (
+  song?: Song | null,
+  playlistId?: string | null
+) => {
+  setSelectedSongs(song ? [song] : []);
+  setSelectedPlaylistId(playlistId ?? null);
+  setShowPlaylistModal(true);
+};
+
 
   const toggleSongSelection = (song: Song) => {
     setSelectedSongs((p) =>
