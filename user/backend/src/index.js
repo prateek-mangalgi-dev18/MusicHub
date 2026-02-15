@@ -31,6 +31,7 @@ app.set("trust proxy", 1);
 const allowedOrigins = [
   "https://musichub-live.vercel.app",
   "https://musichub-gjpr.onrender.com",
+  "http://localhost:3000",
 ];
 
 app.use(
