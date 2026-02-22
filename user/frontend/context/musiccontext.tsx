@@ -68,9 +68,9 @@ interface MusicContextType {
 
   // openAddToPlaylistModal: (song?: Song | null) => void;
   openAddToPlaylistModal: (
-  song?: Song | null,
-  playlistId?: string | null
-) => void;
+    song?: Song | null,
+    playlistId?: string | null
+  ) => void;
 
   addToPlaylist: (playlistId: string, songs: Song[]) => Promise<void>;
   removeFromPlaylist: (playlistId: string, songId: string) => Promise<void>;
@@ -123,6 +123,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   /* ✅ ADDED */
   const [error, setError] = useState<string | null>(null);
 
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+
   /* ================= BOOTSTRAP ================= */
 
   useEffect(() => {
@@ -131,43 +133,55 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       setError(null);
 
       try {
+        // ALWAYS fetch songs — no auth needed
+        const songsRes = await api.get<Song[]>("/api/songs");
+        setAllSongs(songsRes.data);
+      } catch (err: any) {
+        console.error("MusicProvider init failed (songs):", err.message);
+        setError(`Backend error: ${err.message}. Base: ${api.defaults.baseURL}`);
+      }
+
+      // Fetch user data ONLY if token exists — isolated so songs always work
+      try {
         const token = localStorage.getItem("token");
-        if (!token) throw new Error("No token");
+        if (token) {
+          const payload = JSON.parse(atob(token.split(".")[1]));
+          const uid = payload.id;
+          setUserId(uid);
 
-        const payload = JSON.parse(atob(token.split(".")[1]));
-        const uid = payload.id;
-        setUserId(uid);
+          const [likes, pls] = await Promise.all([
+            api.get<Song[]>("/api/user/likes"),
+            api.get<any[]>("/api/user/playlists"),
+          ]);
 
-        const [songs, likes, pls] = await Promise.all([
-          api.get<Song[]>("/api/songs"),
-          api.get<Song[]>("/api/user/likes"),
-          api.get<any[]>("/api/user/playlists"),
-        ]);
+          setLikedSongs(likes.data);
+          setPlaylists(
+            pls.data.map((p) => ({
+              id: p._id,
+              name: p.name,
+              songs: p.songs,
+            }))
+          );
 
-        setAllSongs(songs.data);
-        setLikedSongs(likes.data);
-        setPlaylists(
-          pls.data.map((p) => ({
-            id: p._id,
-            name: p.name,
-            songs: p.songs,
-          }))
-        );
-
-        const saved = localStorage.getItem(`player_state_${uid}`);
-        if (saved) {
-          const { song, time, playing } = JSON.parse(saved);
-          const audio = audioRef.current;
-          if (audio && song?.fileUrl) {
-            audio.src = song.fileUrl;
-            audio.currentTime = time || 0;
-            setCurrentSong(song);
-            if (playing) audio.play();
+          const saved = localStorage.getItem(`player_state_${uid}`);
+          if (saved) {
+            const { song, time, playing } = JSON.parse(saved);
+            const audio = audioRef.current;
+            if (audio && song?.fileUrl) {
+              audio.src = song.fileUrl;
+              audio.currentTime = time || 0;
+              setCurrentSong(song);
+              if (playing) audio.play();
+            }
           }
         }
       } catch (err: any) {
+        // Stale / invalid token — clear it and continue as guest
+        console.warn("User session invalid, clearing token:", err.message);
+        localStorage.removeItem("token");
         setUserId(null);
-        setError("Failed to load music data");
+        setLikedSongs([]);
+        setPlaylists([]);
       } finally {
         setLoadingUser(false);
       }
@@ -304,14 +318,14 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       p.map((pl) =>
         pl.id === pid
           ? {
-              ...pl,
-              songs: [
-                ...pl.songs,
-                ...songs.filter(
-                  (s) => !pl.songs.some((x) => x._id === s._id)
-                ),
-              ],
-            }
+            ...pl,
+            songs: [
+              ...pl.songs,
+              ...songs.filter(
+                (s) => !pl.songs.some((x) => x._id === s._id)
+              ),
+            ],
+          }
           : pl
       )
     );
@@ -339,13 +353,13 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   //   setShowPlaylistModal(true);
   // };
   const openAddToPlaylistModal = (
-  song?: Song | null,
-  playlistId?: string | null
-) => {
-  setSelectedSongs(song ? [song] : []);
-  setSelectedPlaylistId(playlistId ?? null);
-  setShowPlaylistModal(true);
-};
+    song?: Song | null,
+    playlistId?: string | null
+  ) => {
+    setSelectedSongs(song ? [song] : []);
+    setSelectedPlaylistId(playlistId ?? null);
+    setShowPlaylistModal(true);
+  };
 
 
   const toggleSongSelection = (song: Song) => {

@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-require("dotenv").config(); 
+require("dotenv").config();
 
 const path = require("path");
 const cors = require("cors");
@@ -22,23 +22,12 @@ connectToMongoDB(process.env.MONGO_URI)
 app.set("view engine", "ejs");
 
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://musichub-admin-x6wd.onrender.com",
-  "https://musichub-live.vercel.app",
-];
-
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: ["http://localhost:5173", "https://musichub-admin-x6wd.onrender.com", "https://musichub-live.vercel.app"],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 

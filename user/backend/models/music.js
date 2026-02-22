@@ -5,6 +5,7 @@ const musicSchema = new mongoose.Schema({
   artist: String,
   movie: String,
   fileUrl: String,
+  coverImage: String,
 });
 
 const Music = mongoose.model('Music', musicSchema);

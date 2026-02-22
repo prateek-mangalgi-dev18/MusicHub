@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
 
-require("dotenv").config(); 
+require("dotenv").config();
 
 const port = process.env.PORT || 1000;
 
@@ -37,7 +37,7 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin) return callback(null, true); 
+      if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -55,8 +55,8 @@ app.options("*", cors());
 
 
 app.use("/api/songs", songRoutes);
-app.use("/api/user", authRoutes);   
-app.use("/api/user", userRoutes);   
+app.use("/api/user", authRoutes);
+app.use("/api/user", userRoutes);
 
 
 

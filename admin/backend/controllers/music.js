@@ -11,47 +11,71 @@ cloudinary.config({
 
 
 const uploadSong = async (req, res) => {
+  console.log("📥 Received upload request:", req.body.title);
   try {
     const { title, artist, movie } = req.body;
     const audioFile = req.files?.file?.[0];
     const imageFile = req.files?.coverImage?.[0];
 
     if (!title || !artist || !audioFile) {
+      console.warn("⚠️ Missing fields");
       return res.status(400).json({ error: "Missing required fields." });
     }
 
-    
+    // Upload audio to Cloudinary
+    console.log("📤 Uploading audio to Cloudinary...");
     const audioUpload = await cloudinary.uploader.upload(audioFile.path, {
-      resource_type: "video", 
+      resource_type: "video",
       folder: "musichub/songs",
+      timeout: 120000 // 2 minute timeout
     });
+    console.log("✅ Audio uploaded:", audioUpload.secure_url);
 
-    
+    // Delete local audio file
+    const fs = require("fs");
+    if (fs.existsSync(audioFile.path)) {
+      fs.unlinkSync(audioFile.path);
+    }
+
+    // Upload cover image to Cloudinary
     let imageUrl = null;
     if (imageFile) {
+      console.log("📤 Uploading cover image to Cloudinary...");
       const imageUpload = await cloudinary.uploader.upload(imageFile.path, {
         folder: "musichub/covers",
+        timeout: 60000 // 1 minute timeout
       });
       imageUrl = imageUpload.secure_url;
+      console.log("✅ Image uploaded:", imageUrl);
+
+      // Delete local image file
+      if (fs.existsSync(imageFile.path)) {
+        fs.unlinkSync(imageFile.path);
+      }
     }
 
     const newSong = new Music({
       title,
       artist,
       movie,
-      fileUrl: audioUpload.secure_url, 
-      coverImage: imageUrl,             
+      fileUrl: audioUpload.secure_url,
+      coverImage: imageUrl,
     });
 
     await newSong.save();
+    console.log("💾 Song saved to database:", title);
 
     res.status(200).json({
       message: "Upload successful",
       song: newSong,
     });
   } catch (error) {
-    console.error("Upload error:", error);
-    res.status(500).json({ error: "Internal server error." });
+    console.error("❌ Upload error:", error.message);
+    // Ensure we still respond even on error to avoid hanging
+    res.status(500).json({
+      error: "Internal server error during upload.",
+      details: error.message
+    });
   }
 };
 
