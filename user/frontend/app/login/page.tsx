@@ -3,34 +3,36 @@
 import { useState } from "react";
 import axios from "@/lib/axios";
 import { useRouter } from "next/navigation";
+import { useMusic } from "@/context/musiccontext";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { refreshUser } = useMusic();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-//2
-//   const handleLogin = async (e: React.FormEvent) => {
-//   e.preventDefault();
-//   setError("");
+  //2
+  //   const handleLogin = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setError("");
 
-//   try {
-//     const res = await axios.post("/api/user/login", {
-//       email,
-//       password,
-//     });
+  //   try {
+  //     const res = await axios.post("/api/user/login", {
+  //       email,
+  //       password,
+  //     });
 
-//     // 🔥 STORE TOKEN
-//     localStorage.setItem("token", res.data.token);
+  //     // 🔥 STORE TOKEN
+  //     localStorage.setItem("token", res.data.token);
 
-//     // redirect
-//     router.push("/home");
-//   } catch (err: any) {
-//     setError(err.response?.data?.message || "Login failed");
-//   }
-// };
+  //     // redirect
+  //     router.push("/home");
+  //   } catch (err: any) {
+  //     setError(err.response?.data?.message || "Login failed");
+  //   }
+  // };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +47,7 @@ export default function LoginPage() {
 
       if (res.data?.success) {
         localStorage.setItem("token", res.data.token);
+        await refreshUser(); // 🔥 SYNC STATE
         router.push("/home"); // ✅ LOGIN SUCCESS
       } else {
         setError(res.data?.message || "Invalid credentials");

@@ -87,6 +87,7 @@ interface MusicContextType {
   fallbackImage: string;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
+  refreshUser: () => Promise<void>;
 }
 
 const MusicContext = createContext<MusicContextType | null>(null);
@@ -133,64 +134,78 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   /* ================= BOOTSTRAP ================= */
 
+  const refreshUser = async () => {
+    setLoadingUser(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem("token");
+      if (token) {
+        // Simple JWT check
+        const parts = token.split(".");
+        if (parts.length < 2) throw new Error("Invalid token format");
+
+        const payload = JSON.parse(atob(parts[1]));
+        const uid = payload.id;
+        setUserId(uid);
+
+        const [likes, pls] = await Promise.all([
+          api.get<Song[]>("/api/user/likes"),
+          api.get<any[]>("/api/user/playlists"),
+        ]);
+
+        setLikedSongs(likes.data);
+        setPlaylists(
+          pls.data.map((p) => ({
+            id: p._id,
+            name: p.name,
+            songs: p.songs,
+          }))
+        );
+
+        // Resume player state if saved
+        const saved = localStorage.getItem(`player_state_${uid}`);
+        if (saved && !currentSong) { // Only resume if nothing is playing
+          const { song, time, playing } = JSON.parse(saved);
+          const audio = audioRef.current;
+          if (audio && song?.fileUrl) {
+            audio.src = song.fileUrl;
+            audio.currentTime = time || 0;
+            setCurrentSong(song);
+            if (playing) audio.play();
+          }
+        }
+      } else {
+        // No token, ensure state is guest-mode
+        setUserId(null);
+        setLikedSongs([]);
+        setPlaylists([]);
+      }
+    } catch (err: any) {
+      console.warn("User session refresh failed:", err.message);
+      // Clear status on definite error
+      if (localStorage.getItem("token")) {
+        localStorage.removeItem("token");
+      }
+      setUserId(null);
+      setLikedSongs([]);
+      setPlaylists([]);
+    } finally {
+      setLoadingUser(false);
+    }
+  };
+
   useEffect(() => {
     const init = async () => {
-      setLoadingUser(true);
       setError(null);
-
       try {
-        // ALWAYS fetch songs — no auth needed
         const songsRes = await api.get<Song[]>("/api/songs");
         setAllSongs(songsRes.data);
       } catch (err: any) {
         console.error("MusicProvider init failed (songs):", err.message);
-        setError(`Backend error: ${err.message}. Base: ${api.defaults.baseURL}`);
+        setError(`Backend error: ${err.message}`);
       }
-
-      // Fetch user data ONLY if token exists — isolated so songs always work
-      try {
-        const token = localStorage.getItem("token");
-        if (token) {
-          const payload = JSON.parse(atob(token.split(".")[1]));
-          const uid = payload.id;
-          setUserId(uid);
-
-          const [likes, pls] = await Promise.all([
-            api.get<Song[]>("/api/user/likes"),
-            api.get<any[]>("/api/user/playlists"),
-          ]);
-
-          setLikedSongs(likes.data);
-          setPlaylists(
-            pls.data.map((p) => ({
-              id: p._id,
-              name: p.name,
-              songs: p.songs,
-            }))
-          );
-
-          const saved = localStorage.getItem(`player_state_${uid}`);
-          if (saved) {
-            const { song, time, playing } = JSON.parse(saved);
-            const audio = audioRef.current;
-            if (audio && song?.fileUrl) {
-              audio.src = song.fileUrl;
-              audio.currentTime = time || 0;
-              setCurrentSong(song);
-              if (playing) audio.play();
-            }
-          }
-        }
-      } catch (err: any) {
-        // Stale / invalid token — clear it and continue as guest
-        console.warn("User session invalid, clearing token:", err.message);
-        localStorage.removeItem("token");
-        setUserId(null);
-        setLikedSongs([]);
-        setPlaylists([]);
-      } finally {
-        setLoadingUser(false);
-      }
+      await refreshUser();
     };
 
     init();
@@ -428,6 +443,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         fallbackImage,
         searchQuery,
         setSearchQuery,
+        refreshUser,
       }}
     >
       {children}

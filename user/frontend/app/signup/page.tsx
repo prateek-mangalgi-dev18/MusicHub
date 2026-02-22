@@ -3,9 +3,11 @@
 import { useState } from "react";
 import api from "@/lib/axios";
 import { useRouter } from "next/navigation";
+import { useMusic } from "@/context/musiccontext";
 
 export default function SignupPage() {
   const router = useRouter();
+  const { refreshUser } = useMusic();
 
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -17,11 +19,16 @@ export default function SignupPage() {
     setError("");
 
     try {
-      await api.post("/api/user/signup", {
-        username, // ✅ MUST MATCH BACKEND
+      const res = await api.post("/api/user/signup", {
+        username,
         email,
         password,
       });
+
+      if (res.data?.token) {
+        localStorage.setItem("token", res.data.token);
+        await refreshUser();
+      }
 
       router.push("/login"); // ✅ go to login after success
     } catch (err: any) {
