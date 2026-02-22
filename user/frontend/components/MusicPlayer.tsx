@@ -120,7 +120,7 @@ export default function MusicPlayer() {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 w-full bg-white/80 backdrop-blur-xl border-t border-zinc-200 px-6 py-4 z-[100] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+    <div className="fixed bottom-0 left-64 right-0 bg-white/80 backdrop-blur-xl border-t border-zinc-200 px-6 py-4 z-[90] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
       <div className="flex items-center justify-between gap-6 max-w-[1600px] mx-auto">
         {/* SONG INFO */}
         <div className="flex items-center gap-4 w-1/4 min-w-0">

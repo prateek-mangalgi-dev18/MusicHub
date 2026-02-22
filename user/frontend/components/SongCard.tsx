@@ -50,7 +50,7 @@ export default function SongCard({ song }: { song: Song }) {
         <div className="flex items-center justify-between mt-4">
           <button
             onClick={() => playSong(song)}
-            className="flex items-center gap-2 bg-white border border-zinc-200 px-6 py-2 rounded-full text-xs font-black uppercase shadow-sm hover:bg-black hover:text-white hover:border-black transition-all active:scale-95"
+            className="flex items-center gap-2 bg-white border border-zinc-200 px-6 py-2 rounded-full text-[10px] text-black font-black uppercase shadow-sm hover:bg-black hover:text-white hover:border-black transition-all active:scale-95"
           >
             <Play className="w-3 h-3 fill-current" />
             Play
