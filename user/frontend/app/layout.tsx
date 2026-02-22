@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { MusicProvider } from "@/context/musiccontext";
 import Sidebar from "@/components/Sidebar";
+import LoginModal from "@/components/LoginModal";
 import "./globals.css";
 
 export default function RootLayout({
@@ -21,6 +22,7 @@ export default function RootLayout({
               {children}
             </main>
           </div>
+          <LoginModal />
         </MusicProvider>
       </body>
     </html>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
     LogIn,
     Library,
@@ -12,27 +12,40 @@ import {
     Music2,
     Instagram,
     Youtube,
-    Search
+    Search,
+    Home,
+    ListMusic,
+    LogOut
 } from "lucide-react";
 import { FaSpotify } from "react-icons/fa";
-
-const navItems = [
-    { icon: LogIn, label: "Log In", href: "/login" },
-    { icon: Library, label: "Music Library", href: "/" },
-    { icon: User, label: "Artists", href: "/artists" },
-    { icon: FileText, label: "Usage Policy", href: "/policy" },
-    { icon: Info, label: "About", href: "/about" },
-    { icon: Mail, label: "Contact", href: "/contact" },
-];
-
-const socialItems = [
-    { icon: FaSpotify, href: "#" },
-    { icon: Instagram, href: "#" },
-    { icon: Youtube, href: "#" },
-];
+import { useMusic } from "@/context/musiccontext";
 
 export default function Sidebar() {
     const pathname = usePathname();
+    const router = useRouter();
+    const { userId } = useMusic();
+
+    const socialItems = [
+        { icon: FaSpotify, href: "#" },
+        { icon: Instagram, href: "#" },
+        { icon: Youtube, href: "#" },
+    ];
+
+    const handleSignOut = () => {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+    };
+
+    const navItems = [
+        { icon: Home, label: "Home", href: "/home", public: true },
+        { icon: LogIn, label: "Log In", href: "/login", public: !userId },
+        { icon: Library, label: "Music Library", href: "/home/library", public: !!userId },
+        { icon: ListMusic, label: "Playlists", href: "/home/playlists", public: !!userId },
+        { icon: User, label: "Artists", href: "/artists", public: true },
+        { icon: FileText, label: "Usage Policy", href: "/policy", public: true },
+        { icon: Info, label: "About", href: "/about", public: true },
+        { icon: Mail, label: "Contact", href: "/contact", public: true },
+    ];
 
     return (
         <aside className="fixed left-0 top-0 h-screen w-64 bg-black text-white flex flex-col z-[100] border-r border-zinc-900">
@@ -50,7 +63,7 @@ export default function Sidebar() {
 
             {/* Navigation */}
             <nav className="flex-grow px-4 space-y-2 sidebar-scroll overflow-y-auto">
-                {navItems.map((item) => {
+                {navItems.filter(item => item.public).map((item) => {
                     const isActive = pathname === item.href;
                     return (
                         <Link
@@ -66,6 +79,16 @@ export default function Sidebar() {
                         </Link>
                     );
                 })}
+
+                {userId && (
+                    <button
+                        onClick={handleSignOut}
+                        className="w-full flex items-center gap-4 px-4 py-3 rounded-md transition-all text-zinc-500 hover:text-red-500"
+                    >
+                        <LogOut className="w-5 h-5" />
+                        <span className="font-bold text-sm tracking-wide">Sign Out</span>
+                    </button>
+                )}
             </nav>
 
             {/* Socials & Actions */}

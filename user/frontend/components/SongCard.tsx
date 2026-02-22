@@ -30,19 +30,18 @@ export default function SongCard({ song }: { song: Song }) {
 
       {/* Content */}
       <div className="flex flex-col flex-grow">
-        <h3 className="font-bold text-lg leading-tight truncate text-black mb-1 group-hover:text-accent transition-colors">
+        <h3 className="font-black text-xl leading-tight truncate text-black mb-1 group-hover:text-accent transition-colors tracking-tight uppercase italic">
           {song.title}
         </h3>
-        <p className="text-zinc-400 text-sm font-medium truncate mb-4">
+        <p className="text-zinc-500 text-xs font-black uppercase tracking-widest truncate mb-4">
           {song.artist}
         </p>
 
-        <div className="mt-auto space-y-2">
-          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
-            {/* Fallback metadata if needed */}
+        <div className="mt-auto space-y-1">
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-300">
             Recent Release
           </p>
-          <p className="text-[10px] font-black uppercase tracking-widest text-accent">
+          <p className="text-[10px] font-black uppercase tracking-widest text-accent italic">
             {song.movie || "General"}
           </p>
         </div>

@@ -44,15 +44,6 @@ export default function HomePage() {
         </section>
       </div>
 
-      {/* Logout convenience for demo */}
-      <div className="fixed bottom-8 right-8 z-[200]">
-        <button
-          onClick={() => { localStorage.removeItem('token'); window.location.href = '/login'; }}
-          className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-full shadow-xl transition-all hover:scale-105 active:scale-95 text-xs uppercase tracking-widest"
-        >
-          Sign Out
-        </button>
-      </div>
     </div>
   );
 }

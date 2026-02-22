@@ -8,39 +8,39 @@ export default function TopBar() {
             <div className="flex flex-wrap items-center gap-4 max-w-7xl mx-auto">
                 {/* Search Tracks & Artists */}
                 <div className="flex-grow min-w-[200px] relative group">
-                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 group-focus-within:text-accent transition-colors" />
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-black transition-colors" />
                     <input
                         type="text"
                         placeholder="Explore tracks & artists..."
-                        className="w-full bg-slate-100 hover:bg-slate-200 focus:bg-white border-none rounded-2xl py-3.5 ps-12 pe-4 text-sm font-semibold transition-all outline-none ring-0 focus:ring-2 focus:ring-accent/20"
+                        className="w-full bg-zinc-100/50 hover:bg-zinc-100 focus:bg-white border border-transparent focus:border-zinc-200 rounded-2xl py-3.5 ps-12 pe-4 text-sm font-black text-black placeholder:text-zinc-400 placeholder:font-bold transition-all outline-none"
                     />
                 </div>
 
                 {/* Filters */}
                 <div className="flex items-center gap-2">
-                    <button className="flex items-center gap-4 bg-slate-100 hover:bg-slate-200 px-6 py-3.5 rounded-2xl text-sm font-bold transition-all group">
+                    <button className="flex items-center gap-4 bg-zinc-100/50 hover:bg-zinc-100 px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-black transition-all group">
                         <span className="flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-accent group-hover:scale-125 transition-transform"></span>
                             Genres
                         </span>
-                        <ChevronDown className="w-4 h-4 text-zinc-400" />
+                        <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
                     </button>
 
-                    <button className="flex items-center gap-4 bg-slate-100 hover:bg-slate-200 px-6 py-3 rounded-full text-sm font-bold transition-all">
+                    <button className="flex items-center gap-4 bg-zinc-100/50 hover:bg-zinc-100 px-6 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-black transition-all">
                         <span className="flex items-center gap-2">
                             <span className="w-1.5 h-1.5 rounded-full bg-black"></span>
-                            Search Moods
+                            Moods
                         </span>
-                        <ChevronDown className="w-4 h-4 text-zinc-400" />
+                        <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
                     </button>
                 </div>
 
                 {/* Toggle Switch */}
-                <div className="flex bg-slate-100 p-1 rounded-full">
-                    <button className="px-6 py-2 text-xs font-black uppercase rounded-full bg-white shadow-sm">
+                <div className="flex bg-zinc-100/80 p-1.5 rounded-full">
+                    <button className="px-6 py-2 text-[9px] font-black uppercase rounded-full bg-white shadow-sm text-black">
                         Regular
                     </button>
-                    <button className="px-6 py-2 text-xs font-black uppercase rounded-full text-zinc-400 hover:text-black transition-colors">
+                    <button className="px-6 py-2 text-[9px] font-black uppercase rounded-full text-zinc-400 hover:text-black transition-colors">
                         Instrumental
                     </button>
                 </div>

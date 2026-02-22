@@ -59,6 +59,8 @@ interface MusicContextType {
 
   showPlaylistModal: boolean;
   setShowPlaylistModal: (v: boolean) => void;
+  showLoginModal: boolean;
+  setShowLoginModal: (v: boolean) => void;
   selectedPlaylistId: string | null;
   setSelectedPlaylistId: (v: string | null) => void;
   selectedSongs: Song[];
@@ -115,6 +117,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const [duration, setDuration] = useState(0);
 
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [selectedPlaylistId, setSelectedPlaylistId] =
     useState<string | null>(null);
   const [selectedSongs, setSelectedSongs] = useState<Song[]>([]);
@@ -251,6 +254,11 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         setActivePlaylistId(null);
       }
 
+      if (!userId) {
+        setShowLoginModal(true);
+        return;
+      }
+
       audio.src = song.fileUrl;
       setCurrentSong(song);
       await audio.play();
@@ -290,6 +298,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   /* ================= ACTIONS ================= */
 
   const handleLike = async (song: Song) => {
+    if (!userId) {
+      setShowLoginModal(true);
+      return;
+    }
     await api.post(`/api/user/like/${song._id}`);
     setLikedSongs((p) =>
       p.some((s) => s._id === song._id)
@@ -356,6 +368,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     song?: Song | null,
     playlistId?: string | null
   ) => {
+    if (!userId) {
+      setShowLoginModal(true);
+      return;
+    }
     setSelectedSongs(song ? [song] : []);
     setSelectedPlaylistId(playlistId ?? null);
     setShowPlaylistModal(true);
@@ -390,6 +406,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         playlists,
         showPlaylistModal,
         setShowPlaylistModal,
+        showLoginModal,
+        setShowLoginModal,
         selectedPlaylistId,
         setSelectedPlaylistId,
         selectedSongs,

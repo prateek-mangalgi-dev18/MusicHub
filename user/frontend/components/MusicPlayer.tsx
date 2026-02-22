@@ -27,7 +27,7 @@ export default function MusicPlayer() {
     fallbackImage,
   } = useMusic();
 
-  
+
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -72,7 +72,7 @@ export default function MusicPlayer() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [togglePlayPause, handleSeek, progress, duration]);
 
-  
+
 
   useEffect(() => {
     if (!currentSong || !("mediaSession" in navigator)) return;
@@ -120,83 +120,90 @@ export default function MusicPlayer() {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 w-full bg-zinc-900 border-t border-zinc-800 px-6 py-3 z-50">
-      <div className="flex items-center justify-between gap-6">
+    <div className="fixed bottom-0 left-0 w-full bg-white/80 backdrop-blur-xl border-t border-zinc-200 px-6 py-4 z-[100] shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+      <div className="flex items-center justify-between gap-6 max-w-[1600px] mx-auto">
         {/* SONG INFO */}
-        <div className="flex items-center gap-3 w-1/4 min-w-0">
-          <img
-            src={currentSong.coverImage || fallbackImage}
-            alt="cover"
-            className="w-12 h-12 rounded-md object-cover"
-          />
+        <div className="flex items-center gap-4 w-1/4 min-w-0">
+          <div className="relative group">
+            <img
+              src={currentSong.coverImage || fallbackImage}
+              alt="cover"
+              className="w-14 h-14 rounded-xl object-cover shadow-md group-hover:scale-105 transition-transform duration-300"
+            />
+            <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-black/5" />
+          </div>
           <div className="truncate">
-            <p className="font-semibold truncate">{currentSong.title}</p>
-            <p className="text-sm text-gray-400 truncate">
+            <p className="font-black text-black truncate text-sm uppercase tracking-tight leading-tight mb-0.5">
+              {currentSong.title}
+            </p>
+            <p className="text-xs font-bold text-zinc-400 truncate uppercase tracking-widest">
               {currentSong.artist}
             </p>
           </div>
         </div>
 
         {/* CONTROLS */}
-        <div className="flex flex-col items-center w-1/2">
-          <div className="flex items-center gap-6 mb-1">
+        <div className="flex flex-col items-center w-1/2 max-w-2xl px-8">
+          <div className="flex items-center gap-8 mb-3">
             <button
               onClick={playPrevious}
-              className="text-gray-300 hover:text-white"
+              className="text-zinc-400 hover:text-black transition-colors transform active:scale-90"
             >
-              <FaStepBackward size={18} />
+              <FaStepBackward size={16} />
             </button>
 
             <button
               onClick={togglePlayPause}
-              className="bg-white text-black rounded-full w-10 h-10 flex items-center justify-center"
+              className="bg-black text-white rounded-full w-12 h-12 flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-all"
             >
-              {isPlaying ? <FaPause /> : <FaPlay />}
+              {isPlaying ? <FaPause size={14} /> : <FaPlay size={14} className="ml-1" />}
             </button>
 
             <button
               onClick={playNext}
-              className="text-gray-300 hover:text-white"
+              className="text-zinc-400 hover:text-black transition-colors transform active:scale-90"
             >
-              <FaStepForward size={18} />
+              <FaStepForward size={16} />
             </button>
           </div>
 
           {/* SEEK BAR */}
-          <div className="flex items-center gap-2 w-full">
-            <span className="text-xs text-gray-400 w-10 text-right">
+          <div className="flex items-center gap-4 w-full">
+            <span className="text-[10px] font-black text-zinc-400 w-10 text-right tabular-nums">
               {formatTime(currentTime)}
             </span>
 
-            <input
-              type="range"
-              min={0}
-              max={100}
-              value={progress}
-              onChange={(e) => handleSeek(Number(e.target.value))}
-              className="w-full accent-green-500"
-            />
+            <div className="flex-grow relative h-6 flex items-center group">
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={progress}
+                onChange={(e) => handleSeek(Number(e.target.value))}
+                className="w-full h-1 bg-zinc-100 rounded-full appearance-none cursor-pointer accent-black hover:h-1.5 transition-all"
+              />
+            </div>
 
-            <span className="text-xs text-gray-400 w-10">
+            <span className="text-[10px] font-black text-zinc-400 w-10 tabular-nums">
               {formatTime(duration)}
             </span>
           </div>
         </div>
 
         {/* ACTIONS */}
-        <div className="flex items-center gap-4 w-1/4 justify-end">
+        <div className="flex items-center gap-3 w-1/4 justify-end">
           <button
             onClick={() => handleLike(currentSong)}
-            className="text-gray-300 hover:text-red-500"
+            className="p-3 rounded-full hover:bg-zinc-100 text-zinc-400 hover:text-accent transition-all active:scale-90"
           >
-            <FaHeart />
+            <FaHeart size={18} />
           </button>
 
           <button
             onClick={() => openAddToPlaylistModal(currentSong)}
-            className="text-gray-300 hover:text-green-400"
+            className="p-3 rounded-full hover:bg-zinc-100 text-zinc-400 hover:text-black transition-all active:scale-90"
           >
-            <FaPlus />
+            <FaPlus size={18} />
           </button>
         </div>
       </div>
