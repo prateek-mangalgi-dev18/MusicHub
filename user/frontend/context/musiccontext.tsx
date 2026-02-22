@@ -85,6 +85,8 @@ interface MusicContextType {
   setError: React.Dispatch<React.SetStateAction<string | null>>;
 
   fallbackImage: string;
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
 }
 
 const MusicContext = createContext<MusicContextType | null>(null);
@@ -127,6 +129,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   /* ================= BOOTSTRAP ================= */
 
@@ -423,6 +426,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         error,
         setError,
         fallbackImage,
+        searchQuery,
+        setSearchQuery,
       }}
     >
       {children}

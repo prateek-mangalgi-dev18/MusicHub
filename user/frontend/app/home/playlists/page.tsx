@@ -23,15 +23,15 @@ export default function PlaylistsPage() {
     openAddToPlaylistModal,
     removeFromPlaylist,
     likedSongs,
-    loadingUser
+    loadingUser,
+    searchQuery
   } = useMusic();
 
-  const [search, setSearch] = useState("");
   const [expandedPlaylist, setExpandedPlaylist] = useState<string | null>(null);
 
-  const filteredPlaylists = search.trim()
+  const filteredPlaylists = searchQuery.trim()
     ? playlists.filter((p) =>
-      p.name.toLowerCase().includes(search.toLowerCase())
+      p.name.toLowerCase().includes(searchQuery.toLowerCase())
     )
     : playlists;
 
@@ -63,16 +63,6 @@ export default function PlaylistsPage() {
             </div>
           </div>
 
-          {/* Search Local */}
-          <div className="mb-10 relative max-w-md">
-            <input
-              type="text"
-              placeholder="Filter collections..."
-              className="w-full bg-white border border-zinc-200 px-6 py-3.5 rounded-2xl text-sm font-bold shadow-sm outline-none focus:ring-2 focus:ring-accent/20 transition-all text-black"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
 
           {/* Playlist Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">

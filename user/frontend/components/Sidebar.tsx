@@ -39,10 +39,10 @@ export default function Sidebar() {
     const navItems = [
         { icon: Home, label: "Home", href: "/home", public: true },
         { icon: LogIn, label: "Log In", href: "/login", public: !userId },
-        { icon: Library, label: "Music Library", href: "/home/library", public: !!userId },
+        { icon: Library, label: "Library", href: "/home/library", public: !!userId },
         { icon: ListMusic, label: "Playlists", href: "/home/playlists", public: !!userId },
         { icon: User, label: "Artists", href: "/artists", public: true },
-        { icon: FileText, label: "Usage Policy", href: "/policy", public: true },
+        // { icon: FileText, label: "Usage Policy", href: "/policy", public: true },
         { icon: Info, label: "About", href: "/about", public: true },
         { icon: Mail, label: "Contact", href: "/contact", public: true },
     ];
@@ -91,8 +91,8 @@ export default function Sidebar() {
                 )}
             </nav>
 
-            {/* Socials & Actions */}
-            <div className="p-8 border-t border-zinc-900 space-y-8">
+            {/* Socials */}
+            <div className="p-8 border-t border-zinc-900">
                 <div className="flex gap-6 text-zinc-500">
                     {socialItems.map((social, i) => (
                         <Link key={i} href={social.href} className="hover:text-white transition-colors">
@@ -100,10 +100,6 @@ export default function Sidebar() {
                         </Link>
                     ))}
                 </div>
-
-                <button className="w-full flex items-center justify-center p-3 rounded-full bg-zinc-900 hover:bg-zinc-800 transition-colors">
-                    <Search className="w-5 h-5 text-white" />
-                </button>
             </div>
         </aside>
     );

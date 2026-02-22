@@ -2,6 +2,7 @@
 
 import { useMusic } from "@/context/musiccontext";
 import { User } from "lucide-react";
+import TopBar from "@/components/TopBar";
 
 interface Artist {
     name: string;
@@ -9,7 +10,7 @@ interface Artist {
 }
 
 export default function ArtistsPage() {
-    const { allSongs, loadingUser } = useMusic();
+    const { allSongs, loadingUser, searchQuery } = useMusic();
 
     // Compute unique artists and their track counts from the global song list
     const artistMap: Record<string, number> = {};
@@ -22,19 +23,23 @@ export default function ArtistsPage() {
     const artists = Object.entries(artistMap).map(([name, count]) => ({
         name,
         songsCount: count
-    }));
+    })).filter(artist =>
+        artist.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     const loading = loadingUser;
 
     return (
-        <div className="flex flex-col w-full h-screen overflow-y-auto bg-slate-50 p-10">
-            <div className="max-w-7xl mx-auto w-full">
+        <div className="flex flex-col w-full h-screen overflow-y-auto bg-slate-50">
+            <TopBar />
+
+            <div className="p-10 pb-32 max-w-[1600px] mx-auto w-full">
                 <header className="mb-12 border-b border-zinc-200 pb-8">
                     <h1 className="text-4xl font-black tracking-tighter uppercase italic text-black">
-                        Our Artists
+                        {searchQuery ? `Searching Artists: ${searchQuery}` : 'Our Artists'}
                     </h1>
-                    <p className="text-zinc-500 font-medium mt-2">
-                        The voices pulse-checking the rhythm of MusicHub.
+                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mt-2">
+                        {artists.length} curators of sound
                     </p>
                 </header>
 
@@ -53,18 +58,22 @@ export default function ArtistsPage() {
                             <div key={artist.name} className="group flex flex-col items-center text-center">
                                 <div className="relative w-full aspect-square bg-zinc-100 rounded-full overflow-hidden mb-6 ring-1 ring-zinc-200 group-hover:ring-accent transition-all duration-300">
                                     <div className="w-full h-full flex items-center justify-center bg-white group-hover:bg-accent/5 transition-colors">
-                                        <User className="w-20 h-20 text-zinc-200 group-hover:text-accent transition-colors" />
+                                        <User className="w-16 h-16 text-zinc-200 group-hover:text-accent transition-colors" />
                                     </div>
                                 </div>
-                                <h3 className="font-bold text-xl text-black group-hover:text-accent transition-colors">
+                                <h3 className="font-black text-xl text-black uppercase italic tracking-tight group-hover:text-accent transition-colors">
                                     {artist.name}
                                 </h3>
-                                <p className="text-sm font-black text-zinc-400 uppercase tracking-widest mt-1">
+                                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mt-1">
                                     {artist.songsCount} {artist.songsCount === 1 ? 'Track' : 'Tracks'}
                                 </p>
                             </div>
                         ))}
-                        {!loading && artists.length === 0 && <p className="text-zinc-400 font-medium">No artists found in the library.</p>}
+                        {!loading && artists.length === 0 && (
+                            <p className="text-zinc-400 font-bold uppercase text-[10px] tracking-widest col-span-full py-20 text-center">
+                                No artists match "{searchQuery}"
+                            </p>
+                        )}
                     </div>
                 )}
             </div>

@@ -6,10 +6,13 @@ import SongCard from "@/components/SongCard";
 import { Play } from "lucide-react";
 
 export default function HomePage() {
-  const { allSongs, loadingUser } = useMusic();
+  const { allSongs, loadingUser, searchQuery } = useMusic();
 
   const loading = loadingUser;
-  const songs = allSongs;
+  const filteredSongs = allSongs.filter(song =>
+    song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    song.artist.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="flex flex-col w-full h-screen overflow-y-auto bg-slate-50">
@@ -20,7 +23,7 @@ export default function HomePage() {
         <section className="mb-20">
           <div className="flex items-center justify-between mb-8 border-b border-zinc-200 pb-4">
             <h2 className="text-3xl font-black tracking-tight text-black uppercase italic">
-              Music Library
+              {searchQuery ? `Searching: ${searchQuery}` : 'Music Library'}
             </h2>
           </div>
 
@@ -33,12 +36,14 @@ export default function HomePage() {
                   <div className="h-3 bg-zinc-100 rounded w-1/2"></div>
                 </div>
               ))
-            ) : songs.length > 0 ? (
-              songs.map((song) => (
+            ) : filteredSongs.length > 0 ? (
+              filteredSongs.map((song) => (
                 <SongCard key={song._id} song={song} />
               ))
             ) : (
-              <p className="text-zinc-400">No songs found in your library.</p>
+              <p className="text-zinc-400 font-bold uppercase text-[10px] tracking-widest col-span-full py-20 text-center">
+                No matches found for "{searchQuery}"
+              </p>
             )}
           </div>
         </section>

@@ -5,7 +5,12 @@ import TopBar from "@/components/TopBar";
 import SongCard from "@/components/SongCard";
 
 export default function LibraryPage() {
-  const { likedSongs, loadingUser } = useMusic();
+  const { likedSongs, loadingUser, searchQuery } = useMusic();
+
+  const filteredLikes = likedSongs.filter(song =>
+    song.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    song.artist.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="flex flex-col w-full h-screen overflow-y-auto bg-slate-50">
@@ -16,10 +21,10 @@ export default function LibraryPage() {
         <section className="mb-20">
           <div className="flex items-center justify-between mb-8 border-b border-zinc-200 pb-4">
             <h2 className="text-3xl font-black tracking-tight text-black uppercase italic">
-              Your Liked Songs
+              {searchQuery ? `Searching Liked: ${searchQuery}` : 'Your Liked Songs'}
             </h2>
             <div className="flex gap-2 text-zinc-400 text-xs font-black uppercase tracking-widest">
-              {likedSongs.length} Tracks
+              {filteredLikes.length} Tracks
             </div>
           </div>
 
@@ -33,9 +38,9 @@ export default function LibraryPage() {
                 </div>
               ))}
             </div>
-          ) : likedSongs.length > 0 ? (
+          ) : filteredLikes.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-x-10 gap-y-16">
-              {likedSongs.map((song) => (
+              {filteredLikes.map((song) => (
                 <SongCard key={song._id} song={song} />
               ))}
             </div>
